@@ -1,0 +1,7 @@
+# ignore ALL files in the directory named as:
+__pycache__/
+data/
+figures/
+
+#files starting with 
+conn*

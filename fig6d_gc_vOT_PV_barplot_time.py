@@ -175,5 +175,5 @@ folder1 = f"{fname.figures_dir}/conn/"
 if not os.path.exists(folder1):
     os.makedirs(folder1)
 
-plt.savefig(f"{folder1}/{method}_barplot_vOT_{seed}_time.pdf", bbox_inches="tight")
+plt.savefig(f"{folder1}/{method}_barplot_vOT_{target}_time.pdf", bbox_inches="tight")
 plt.show()

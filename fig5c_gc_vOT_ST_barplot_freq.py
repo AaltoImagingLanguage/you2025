@@ -196,5 +196,5 @@ if not os.path.exists(folder1):
 plt.tight_layout(rect=[0, 0.03, 1, 1])
 fig.supxlabel("Frequency")
 plt.subplots_adjust(wspace=0.4, hspace=0)
-plt.savefig(f"{folder1}/{method}_barplot_vOT_{seed}_freq.pdf", bbox_inches="tight")
+plt.savefig(f"{folder1}/{method}_barplot_vOT_{target}_freq.pdf", bbox_inches="tight")
 # plt.show()

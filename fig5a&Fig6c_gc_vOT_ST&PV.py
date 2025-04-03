@@ -289,7 +289,7 @@ def plot_gc(ii, jj, threshold=1):
         os.makedirs(folder1)
 
     plt.savefig(
-        f"{folder1}/gc_tfs_vOT_{target}_{list(event_id.keys())[c][:3]}.pdf",
+        f"{folder1}/gc_tfs_vOT_{args.seed}_{list(event_id.keys())[c][:3]}.pdf",
         bbox_inches="tight",
     )
 

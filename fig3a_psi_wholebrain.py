@@ -10,10 +10,9 @@ import argparse
 import time
 from mne.viz import Brain
 from scipy import sparse
-from plot_cluster import plot_cluster_label
-from mne_connectivity import read_connectivity
+from utility import plot_cluster_label, create_labels_adjacency_matrix
 import mne
-from config import fname, event_id, parc, time_windows, onset, n_freq, vOT_id
+from config import fname, event_id, parc, time_windows, onset, vOT_id
 import os
 import warnings
 
@@ -23,7 +22,7 @@ import figure_setting
 mne.set_config("SUBJECTS_DIR", fname.mri_subjects_dir)
 SUBJECT = "fsaverage"
 annotation = mne.read_labels_from_annot("fsaverage", parc=parc, verbose=False)
-rois = [label for label in annotation if "Unknown" not in label.name]
+labels = [label for label in annotation if "Unknown" not in label.name]
 
 
 def plot_psi(ii, threshold=1):
@@ -70,7 +69,7 @@ def plot_psi(ii, threshold=1):
             colors = cmap(norm(stc))
             for i, color in enumerate(colors):
 
-                brain.add_label(rois[i], color=color, borders=False, alpha=1)
+                brain.add_label(labels[i], color=color, borders=False, alpha=1)
             brain.add_annotation(
                 parc, borders=True, color="white", remove_existing=False
             )
@@ -82,17 +81,17 @@ def plot_psi(ii, threshold=1):
                 threshold=threshold,
                 tail=0,
                 n_jobs=-1,
-                adjacency=label_adjacency_matrix,
+                adjacency=labels_adjacency_matrix,
                 verbose=False,
                 buffer_size=None,
-            )  # (events,subjects,len(rois), length)
+            )  # (events,subjects,len(labels), length)
 
             good_clusters_idx = np.where(pvals < 0.05)[0]
             good_clusters = [clusters[idx] for idx in good_clusters_idx]
             print("n_cluster=", len(good_clusters))
 
             for cluster in good_clusters:
-                plot_cluster_label(cluster, rois, brain, color="black", width=3)
+                plot_cluster_label(cluster, labels, brain, color="black", width=3)
 
             screenshot = brain.screenshot()
             # crop out the white margins
@@ -144,37 +143,12 @@ folder = f"{fname.conn_dir}/{method}"
 if not os.path.exists(folder):
     os.makedirs(folder)
 src_to = mne.read_source_spaces(fname.fsaverage_src, verbose=False)
-adjacency = mne.spatial_src_adjacency(src_to)
 
+labels_adjacency_matrix = create_labels_adjacency_matrix(labels, src_to)
 
 file_name = f"psi_vOT_wholebrain_band_{args.band}"
 
-# %%adjacency matrix for labels
-# Initialize an empty adjacency matrix for labels
-n_labels = len(rois)
-label_adjacency_matrix = np.zeros((n_labels, n_labels))
-rois1 = [
-    roi.restrict(src_to, name=None) for roi in rois
-]  # Restrict a label to a source space.
 
-# Loop through each label and find its vertices
-for i, label1 in enumerate(rois1):
-    for j, label2 in enumerate(rois1):
-        if i != j:
-            # Check if any vertices of label1 are adjacent to vertices of label2
-            # (you need to adapt this depending on how you define adjacency)
-
-            label1_vertices = np.in1d(adjacency.row, label1.vertices)
-            label2_vertices = np.in1d(adjacency.col, label2.vertices)
-            label1_vertices0 = np.in1d(adjacency.row, label2.vertices)
-            label2_vertices0 = np.in1d(adjacency.col, label1.vertices)
-            if np.any(label1_vertices & label2_vertices) or np.any(
-                label1_vertices0 & label2_vertices0
-            ):
-                label_adjacency_matrix[i, j] = 1
-        else:
-            label_adjacency_matrix[i, j] = 1
-label_adjacency_matrix = sparse.coo_matrix(label_adjacency_matrix)
 # %% plot
 folder1 = f"{fname.figures_dir}/conn/wholebrain/"
 if not os.path.exists(folder1):

@@ -9,15 +9,13 @@ import matplotlib as mpl
 import argparse
 import time
 from mne.viz import Brain
-from scipy import sparse
 
-from mne_connectivity import read_connectivity
 import mne
-from config import fname, event_id, parc, vOT_id, time_windows, onset, n_freq
+from config import fname, event_id, parc, vOT_id, time_windows, onset
 import os
 import warnings
 import figure_setting
-from plot_cluster import plot_cluster_label
+from utility import plot_cluster_label, create_labels_adjacency_matrix
 
 warnings.filterwarnings("ignore")
 
@@ -150,33 +148,8 @@ if not os.path.exists(folder):
     os.makedirs(folder)
 
 src_to = mne.read_source_spaces(fname.fsaverage_src, verbose=False)
-adjacency = mne.spatial_src_adjacency(src_to)
-# %%adjacency matrix for labels
-# Initialize an empty adjacency matrix for labels
-n_labels = len(rois)
-label_adjacency_matrix = np.zeros((n_labels, n_labels))
-rois1 = [
-    roi.restrict(src_to, name=None) for roi in rois
-]  # Restrict a label to a source space.
 
-# Loop through each label and find its vertices
-for i, label1 in enumerate(rois1):
-    for j, label2 in enumerate(rois1):
-        if i != j:
-            # Check if any vertices of label1 are adjacent to vertices of label2
-            # (you need to adapt this depending on how you define adjacency)
-
-            label1_vertices = np.in1d(adjacency.row, label1.vertices)
-            label2_vertices = np.in1d(adjacency.col, label2.vertices)
-            label1_vertices0 = np.in1d(adjacency.row, label2.vertices)
-            label2_vertices0 = np.in1d(adjacency.col, label1.vertices)
-            if np.any(label1_vertices & label2_vertices) or np.any(
-                label1_vertices0 & label2_vertices0
-            ):
-                label_adjacency_matrix[i, j] = 1
-        else:
-            label_adjacency_matrix[i, j] = 1
-label_adjacency_matrix = sparse.coo_matrix(label_adjacency_matrix)
+label_adjacency_matrix = create_labels_adjacency_matrix(labels, src_to)
 
 # %% grand average and plot
 file_name = f"psi_vOT_wholebrain_band_{args.band}"

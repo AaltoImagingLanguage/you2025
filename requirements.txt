@@ -1,0 +1,8 @@
+mne
+mne-connectivity
+numpy
+pandas
+statannot==0.2.3
+seaborn==0.12.2
+pandas
+matplotlib

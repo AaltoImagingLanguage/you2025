@@ -1,7 +1,6 @@
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
-import argparse
 
 import mne
 from config import fname, parc, subjects, vOT_id

@@ -40,7 +40,7 @@ if not os.path.exists(folder1):
 
 # whether to compute leakage from scratch (with access to personal data)
 compute_ctf = False
-compute_psf = True
+compute_psf = False
 
 plot_Fig1c = False
 plot_Fig1b = True

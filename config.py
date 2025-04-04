@@ -104,9 +104,6 @@ else:
 fname.add("study_path", study_path)
 fname.add("subjects_dir", "{study_path}/subjects/")
 #  mri data of fsaverage tempalte brain
-fname.add("mri_subjects_dir", "{study_path}/mri_subjects/")
-fname.add("sp", "ico4")  # Add this so we can use it in the filenames below
-fname.add("fsaverage_src", "{mri_subjects_dir}/fsaverage/fsaverage-{sp}-src.fif")
 fname.add("fwd_r", "{subjects_dir}/{subject}-{sp}-fwd.fif")
 fname.add("inv", "{subjects_dir}/{subject}-{sp}-inv.fif")
 fname.add("epo_con", "{study_path}/subjects/{subject}-{condition}-epo.fif")
@@ -117,6 +114,9 @@ fname.add("conn_dir", "{study_path}/conn/")
 fname.add("data_dir", "./data/")
 fname.add("data_conn", "{data_dir}/connectivity/")
 
+fname.add("mri_subjects_dir", "{data_dir}/mris/")
+fname.add("sp", "ico4")  # Add this so we can use it in the filenames below
+fname.add("fsaverage_src", "{mri_subjects_dir}/fsaverage/fsaverage-{sp}-src.fif")
 # To save morephed and granded averaged data (publicly available)
 # fname.add("subjects_dir", "{data_dir}/subjects/")
 

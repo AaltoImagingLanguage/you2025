@@ -2,20 +2,21 @@
 Last vers
 """
 
+import argparse
+import os
+import time
+import warnings
+
+import matplotlib as mpl
+
 # %%
 import matplotlib.pyplot as plt
+import mne
 import numpy as np
-import matplotlib as mpl
-import argparse
-import time
 from mne.viz import Brain
 
-import mne
-from config import fname, event_id, parc, vOT_id, time_windows, onset
-import os
-import warnings
-import figure_setting
-from utility import plot_cluster_label, create_labels_adjacency_matrix
+from config import event_id, fname, onset, parc, time_windows, vOT_id
+from utility import create_labels_adjacency_matrix, plot_cluster_label
 
 warnings.filterwarnings("ignore")
 
@@ -26,9 +27,8 @@ rois = [label for label in annotation if "Unknown" not in label.name]
 
 
 def plot_coh(ii, threshold=1):
-
+    """Plot coherence for each experimental condition during each time window."""
     psi_ts = np.load(f"{fname.data_conn}/{file_name}.npy")
-    # %%
     times = np.load(f"{fname.data_conn}/time_points.npy")
 
     fig, axis = plt.subplots(3, len(time_windows), figsize=(8 * len(time_windows), 12))
@@ -69,7 +69,6 @@ def plot_coh(ii, threshold=1):
             # Map values to colors
             colors = cmap(norm(stc))
             for i, color in enumerate(colors):
-
                 brain.add_label(rois[i], color=color, borders=False, alpha=1)
             brain.add_annotation(
                 parc, borders=True, color="white", remove_existing=False

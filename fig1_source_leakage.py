@@ -1,51 +1,38 @@
 # %%
+import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
-
 import mne
-from config import fname, parc, subjects, vOT_id
+import numpy as np
 from mne.minimum_norm import (
-    get_point_spread,
     get_cross_talk,
+    get_point_spread,
     make_inverse_resolution_matrix,
     read_inverse_operator,
 )
-import os
-from utility import select_rois
-import figure_setting
 from mne.viz import Brain
-import matplotlib as mpl
+
+from config import fname, parc, subjects, vOT_id
+from utility import select_rois
+
+# Whether to compute leakage from scratch (requires access to personal data).
+compute_ctf = False
+compute_psf = False
+
+# Which figures to plot.
+plot_Fig1c = True
+plot_Fig1b = True
+
 
 method = "dSPM"
 mne.set_config("SUBJECTS_DIR", fname.mri_subjects_dir)
 SUBJECT = "fsaverage"
 
-
 annotation = mne.read_labels_from_annot("fsaverage", parc=parc, verbose=False)
 labels = [label for label in annotation if "Unknown" not in label.name]
 
-
 src_to = mne.read_source_spaces(fname.fsaverage_src)
 
-# data folder
-folder = f"{fname.data_dir}/source_leakage/"
-if not os.path.exists(folder):
-    os.makedirs(folder)
-print("folder:", folder)
-
-# figure folder
-folder1 = f"{fname.figures_dir}/source_leakage/"
-if not os.path.exists(folder1):
-    os.makedirs(folder1)
-
-# whether to compute leakage from scratch (with access to personal data)
-compute_ctf = False
-compute_psf = False
-
-plot_Fig1c = False
-plot_Fig1b = True
-
-# %% 1. Compute source leakage from all pacels to left vOT using cross-talk function (CTF)
+# 1. Compute source leakage from all pacels to left vOT using cross-talk function (CTF)
 if compute_ctf:
     ctfs_all_norm = np.zeros([len(subjects), len(labels)])
     for ii, sub in enumerate(subjects):
@@ -89,7 +76,8 @@ if compute_ctf:
             )
             stc_morph = morph.apply(stc_sum_vertices)
 
-            # select leakage to vOT at label r: mean of the absolute value across all vertices
+            # Select leakage to vOT at label r: mean of the absolute value across all
+            # vertices.
             stc_label = stc_morph.in_label(labels[vOT_id])
             leakage[r] = np.mean(np.abs(stc_label.data[:, 0]))
 
@@ -97,13 +85,12 @@ if compute_ctf:
         leakage_norm = leakage.copy() / leakage[vOT_id]
         ctfs_all_norm[ii] = leakage_norm
 
-    np.save(f"{folder}/leakage_ave_ctfs_wholebrain-vOT", ctfs_all_norm)
+    np.save(fname.ctf(seed_roi="vOT"), ctfs_all_norm)
 else:
-    ctfs_all_norm = np.load(f"{folder}/leakage_ave_ctfs_wholebrain-vOT.npy")
+    ctfs_all_norm = np.load(fname.ctf(seed_roi="vOT"))
 
-# %% visulize the leakage from all parcels to vOT (Figure 1c)
+# Visualize the leakage from all parcels to vOT (Figure 1c).
 if plot_Fig1c:
-
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
     brain = Brain(
         subject=SUBJECT,
@@ -124,7 +111,6 @@ if plot_Fig1c:
     # Map values to colors
     colors = cmap(norm(stc))
     for i, color in enumerate(colors):
-
         brain.add_label(labels[i], color=color, borders=False, alpha=1)
     brain.add_annotation(parc, borders=True, color="white", remove_existing=False)
     brain.show_view()
@@ -145,11 +131,12 @@ if plot_Fig1c:
         ax=ax,
     )
 
-    plt.savefig(f"{folder1}/wholebrain2vOT_ctf.pdf", bbox_inches="tight")
+    plt.savefig(fname.fig_ctf(seed_roi="vOT"), bbox_inches="tight")
     plt.show()
 
 
-# %% 2. Compute source leakage from left vOT to all parcels using point-spread function (PSF)
+# 2. Compute source leakage from left vOT to all parcels using point-spread function
+#    (PSF).
 if compute_psf:
     # select vOT parcel based on its index in the parcellation
     vOT = select_rois(rois_id=[vOT_id], parc=parc, combines=[])
@@ -197,13 +184,12 @@ if compute_psf:
         leakage_norm = leakage.copy() / leakage[vOT_id]
         psf_all_norm[ii] = leakage_norm
     #
-    np.save(f"{folder}/leakage_ave_psfs_vOT-wholebrain", psf_all_norm)
+    np.save(fname.psf(seed_roi="vOT"), psf_all_norm)
 else:
-    psf_all_norm = np.load(f"{folder}/leakage_ave_psfs_vOT-wholebrain.npy")
+    psf_all_norm = np.load(fname.psf(seed_roi="vOT"))
 
 # %% Visualze the leakages from vOT to all parcels (Figure 1b)
 if plot_Fig1b:
-
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
     brain = Brain(
         subject=SUBJECT,
@@ -225,7 +211,6 @@ if plot_Fig1b:
     # Map values to colors
     colors = cmap(norm(stc))
     for i, color in enumerate(colors):
-
         brain.add_label(labels[i], color=color, borders=False, alpha=1)
 
     brain.add_annotation(parc, borders=True, color="white", remove_existing=False)
@@ -247,5 +232,5 @@ if plot_Fig1b:
         ax=ax,
     )
 
-    plt.savefig(f"{folder1}/vOT2wholebrain_psf.pdf", bbox_inches="tight")
+    plt.savefig(fname.fig_psf(seed_roi="vOT"), bbox_inches="tight")
     plt.show()

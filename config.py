@@ -110,19 +110,25 @@ fname.add("data_conn", "{data_dir}/connectivity/")
 fname.add("private_data_dir", "nonexisting" if private_data_dir is None else private_data_dir)
 fname.add("figures_dir", figures_dir)  #  where the figures are saved
 
-fname.add("subjects_dir", "{private_data_dir}/subjects/")
+# Public data
 fname.add("mri_subjects_dir", "{data_dir}/mris/")
 fname.add("sp", "ico4")  # add this so we can use it in the filenames below
 fname.add("fsaverage_src", "{mri_subjects_dir}/fsaverage/fsaverage-{sp}-src.fif")
+fname.add("psf", "{data_dir}/source_leakage/leakage_ave_psfs_{seed_roi}-wholebrain.npy")
+fname.add("ctf", "{data_dir}/source_leakage/leakage_ave_ctfs_wholebrain-{seed_roi}.npy")
+fname.add("psi", "{data_dir}/connectivity/psi_vOT_wholebrain_band_{band}.npy")
+fname.add("times", "{data_dir}/connectivity/time_points.npy")
+
+# Private data
+fname.add("subjects_dir", "{private_data_dir}/subjects/")
 fname.add("fwd_r", "{subjects_dir}/{subject}-{sp}-fwd.fif")
 fname.add("inv", "{subjects_dir}/{subject}-{sp}-inv.fif")
 fname.add("epo_con", "{subjects_dir}/{subject}-{condition}-epo.fif")
 fname.add("ga_stc", "{subjects_dir}/grand_average_{category}_stc")
 fname.add("conn_dir", "{private_data_dir}/conn/")
-fname.add("psf", "{data_dir}/source_leakage/leakage_ave_psfs_{seed_roi}-wholebrain.npy")
-fname.add("ctf", "{data_dir}/source_leakage/leakage_ave_ctfs_wholebrain-{seed_roi}.npy")
 
 # Figures
 fname.add("fig_psf", "{figures_dir}/source_leakage/{seed_roi}2wholebrain_psf.pdf", mkdir=True)
 fname.add("fig_ctf", "{figures_dir}/source_leakage/wholebrain2{seed_roi}_ctf.pdf", mkdir=True)
-fname.add("fig_con", "{figures_dir}/conn/wholebrain/{method}_{seed_roi}_wholebrain_band_{band}.pdf", mkdir=True)
+fname.add("fig_psi", "{figures_dir}/conn/psi_vOT_{roi}_band_{band}.pdf", mkdir=True)
+fname.add("fig_psi_contrast", "{figures_dir}/conn/psi_vOT_{roi}_band_{band}_contrast.pdf", mkdir=True)

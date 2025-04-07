@@ -3,6 +3,7 @@
 PSI connectivity is plotted for each experimental condition during each time window.
 """
 
+import argparse
 import time
 import warnings
 
@@ -15,12 +16,24 @@ from mne.viz import Brain
 from config import event_id, fname, onset, parc, time_windows, vOT_id
 from utility import create_labels_adjacency_matrix, plot_cluster_label
 
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument(
+    "--band",
+    type=str,
+    default="broadband",
+    help=(
+        "frequency band to show. One of: alpha, theta, low_beta, high_beta, low_gamma, "
+        "broadband",
+    ),
+)
+args = parser.parse_args()
+
 start_time1 = time.monotonic()
 warnings.filterwarnings("ignore")
 
 # Load the PSI connectivity data
-psi_ts = np.load(f"{fname.data_conn}/psi_vOT_wholebrain_band_broadband.npy")
-times = np.load(f"{fname.data_conn}/time_points.npy")
+psi_ts = np.load(fname.psi(band=args.band))
+times = np.load(fname.times)
 
 # Load the spatial ROIs.
 mne.set_config("SUBJECTS_DIR", fname.mri_subjects_dir)
@@ -118,7 +131,7 @@ fig.colorbar(
     shrink=0.4,
 )
 plt.savefig(
-    fname.fig_con(method="psi", seed_roi="vOT", band="broadband"),
+    fname.fig_psi(roi="wholebrain", band="broadband"),
     bbox_inches="tight",
 )
 plt.show()

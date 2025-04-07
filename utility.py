@@ -110,3 +110,4 @@ def create_labels_adjacency_matrix(labels, src_to):
             else:
                 label_adjacency_matrix[i, j] = 1
     label_adjacency_matrix = sparse.coo_matrix(label_adjacency_matrix)
+    return label_adjacency_matrix

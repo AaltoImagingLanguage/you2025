@@ -36,8 +36,6 @@ def gc2array(
 
     gc_tfs = []
     gc_tr_tfs = []
-    # shuffle the order of subjects
-    # random.shuffle(subjects)
 
     for sub in subjects:
         gc_tfs_sub = []
@@ -92,6 +90,8 @@ if not os.path.exists(folder):
     os.makedirs(folder)
 
 suffix = f"n_freq{n_freq}_fa_rank_pca"
+# shuffle the order of subjects
+random.shuffle(subjects)
 
 Parallel(n_jobs=n_jobs)(
     delayed(gc2array)(ii, jj) for ii, jj in product(i_seeds, j_targets) if ii != jj

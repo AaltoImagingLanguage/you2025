@@ -28,7 +28,7 @@ def plot_psi_contrast(jj, threshold=1):
     if args.seed == "PV":
         psi_ts = -psi_ts[:, :, jj, :][:, :, None, :]
     else:
-        psi_ts = psi_ts[:, :, vOT_id, :][:, :, None, :]
+        psi_ts = psi_ts[:, :, jj, :][:, :, None, :]
     times = np.load(f"{fname.data_conn}/time_points.npy")
 
     fig, axis = plt.subplots(1, 1, figsize=(5, 4), sharey=True)

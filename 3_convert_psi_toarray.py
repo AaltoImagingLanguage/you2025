@@ -7,10 +7,9 @@ The order of subjects are randomly shuffled for safely sharing the data.
 import numpy as np
 import argparse
 import time
-from itertools import product
-from joblib import Parallel, delayed
 from mne_connectivity import read_connectivity
 import mne
+import random
 from config import (
     fname,
     subjects,
@@ -23,11 +22,13 @@ from config import (
 )
 import os
 
-
+random.seed(1)
 mne.set_config("SUBJECTS_DIR", fname.mri_subjects_dir)
 SUBJECT = "fsaverage"
 hemi = "lh"
 freqs = np.linspace(fmin, fmax, int((fmax - fmin) * 1 + 1))
+
+random.shuffle(subjects)
 
 
 def psi2array(ii):

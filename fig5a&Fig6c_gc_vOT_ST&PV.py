@@ -302,7 +302,7 @@ parser.add_argument("--thre", type=float, default=2, help="threshod for cpt")
 parser.add_argument(
     "--condition",
     type=int,
-    default=2,
+    default=1,
     help="Number of lags to use for the vector autoregressive model (0: RW, 1: RL1, 2: RL3)",
 )
 parser.add_argument(

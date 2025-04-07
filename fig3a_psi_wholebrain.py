@@ -12,7 +12,7 @@ from mne.viz import Brain
 from scipy import sparse
 from utility import plot_cluster_label, create_labels_adjacency_matrix
 import mne
-from config import fname, event_id, parc, time_windows, onset, vOT_id
+from config import fname, event_id, parc, time_windows, onset, frequency_bands
 import os
 import warnings
 
@@ -25,7 +25,7 @@ annotation = mne.read_labels_from_annot("fsaverage", parc=parc, verbose=False)
 labels = [label for label in annotation if "Unknown" not in label.name]
 
 
-def plot_psi(ii, threshold=1):
+def plot_psi(threshold=1):
 
     psi_ts = np.load(f"{fname.data_conn}/{file_name}.npy")
 
@@ -83,6 +83,7 @@ def plot_psi(ii, threshold=1):
                 n_jobs=-1,
                 adjacency=labels_adjacency_matrix,
                 verbose=False,
+                seed=3,
                 buffer_size=None,
             )  # (events,subjects,len(labels), length)
 
@@ -114,8 +115,11 @@ def plot_psi(ii, threshold=1):
         orientation="vertical",
         shrink=0.4,
     )
+    plt.suptitle(
+        f"PSI: {args.band} ({frequency_bands[args.band][0]}-{frequency_bands[args.band][1]} Hz)"
+    )
     plt.savefig(
-        f"{folder1}/{file_name}.pdf",  # _blcorrected
+        f"{folder1}/{file_name}.pdf",
         bbox_inches="tight",
     )
     plt.show()
@@ -130,7 +134,7 @@ parser.add_argument("--thre", type=float, default=1, help="threshod for cpt")
 parser.add_argument(
     "--band",
     type=str,
-    default="broadband",
+    default="low_gamma",
     help="frequency band to compute connectivity: theta, alpha, low_beta, high_beta,low_gamma, broadband",
 )
 args = parser.parse_args()
@@ -154,6 +158,6 @@ folder1 = f"{fname.figures_dir}/conn/wholebrain/"
 if not os.path.exists(folder1):
     os.makedirs(folder1)
 
-plot_psi(vOT_id, threshold=args.thre)
+plot_psi(threshold=args.thre)
 print((time.monotonic() - start_time1) / 60)
 print("FINISHED!")

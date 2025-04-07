@@ -13,7 +13,7 @@ mpl.rcParams["lines.linewidth"] = 2
 
 # %%for time course plot and multi comparion
 mpl.rcParams["font.size"] = 20
-mpl.rcParams["figure.titlesize"] = 20
+mpl.rcParams["figure.titlesize"] = 24
 # %%brain compare
 
 

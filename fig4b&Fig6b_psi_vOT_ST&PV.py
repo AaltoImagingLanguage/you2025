@@ -23,10 +23,10 @@ def plot_psi_pair(jj, threshold=1):
     seed = [k for k, v in rois.items() if v == jj][0]
     psi_ts = np.load(f"{fname.data_conn}/psi_vOT_wholebrain_band_{args.band}.npy")
     if args.seed == "PV":
-        # chnage the direction
+        # change the direction
         psi_ts = -psi_ts[:, :, jj, :][:, :, None, :]
     else:
-        psi_ts = psi_ts[:, :, vOT_id, :][:, :, None, :]
+        psi_ts = psi_ts[:, :, jj, :][:, :, None, :]
     times = np.load(f"{fname.data_conn}/time_points.npy")
 
     fig, axis = plt.subplots(1, 1, figsize=(5, 4), sharey=True)

@@ -30,6 +30,7 @@ from config import (
     fmax,
     n_rank,
     n_freq,
+    frequency_bands
 )
 from sklearn.decomposition import PCA
 import os

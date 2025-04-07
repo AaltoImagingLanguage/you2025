@@ -13,7 +13,7 @@ import mne
 import numpy as np
 from mne.viz import Brain
 
-from config import event_id, fname, onset, parc, time_windows, vOT_id
+from config import event_id, fname, frequency_bands, onset, parc, time_windows, vOT_id
 from utility import create_labels_adjacency_matrix, plot_cluster_label
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -97,6 +97,7 @@ for event_index in range(len(event_id.values())):
             n_jobs=-1,
             adjacency=labels_adjacency_matrix,
             verbose=False,
+            seed=3,
             buffer_size=None,
         )  # (events, subjects, len(labels), length)
 
@@ -129,6 +130,10 @@ fig.colorbar(
     ax=axis[:, :],
     orientation="vertical",
     shrink=0.4,
+)
+plt.suptitle(
+    f"PSI: {args.band} "
+    f"({frequency_bands[args.band][0]}-{frequency_bands[args.band][1]} Hz)"
 )
 plt.savefig(
     fname.fig_psi(roi="wholebrain", band="broadband"),

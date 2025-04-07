@@ -117,7 +117,10 @@ fname.add("fsaverage_src", "{mri_subjects_dir}/fsaverage/fsaverage-{sp}-src.fif"
 fname.add("psf", "{data_dir}/source_leakage/leakage_ave_psfs_{seed_roi}-wholebrain.npy")
 fname.add("ctf", "{data_dir}/source_leakage/leakage_ave_ctfs_wholebrain-{seed_roi}.npy")
 fname.add("psi", "{data_dir}/connectivity/psi_vOT_wholebrain_band_{band}.npy")
+fname.add("gc", "{data_dir}/connectivity/gc_{a}_{b}.npy")
+fname.add("gc_tr", "{data_dir}/connectivity/gc_tr_{a}_{b}.npy")
 fname.add("times", "{data_dir}/connectivity/time_points.npy")
+fname.add("freqs", "{data_dir}/connectivity/freq_points.npy")
 
 # Private data
 fname.add("subjects_dir", "{private_data_dir}/subjects/")
@@ -132,3 +135,5 @@ fname.add("fig_psf", "{figures_dir}/source_leakage/{seed_roi}2wholebrain_psf.pdf
 fname.add("fig_ctf", "{figures_dir}/source_leakage/wholebrain2{seed_roi}_ctf.pdf", mkdir=True)
 fname.add("fig_psi", "{figures_dir}/conn/psi_vOT_{roi}_band_{band}.pdf", mkdir=True)
 fname.add("fig_psi_contrast", "{figures_dir}/conn/psi_vOT_{roi}_band_{band}_contrast.pdf", mkdir=True)
+fname.add("fig_gc", "{figures_dir}/conn/gc_tfs_vOT_{roi}_{condition}.pdf", mkdir=True)
+fname.add("fig_bar", "{figures_dir}/conn/gc_barplot_vOT_{roi}_time.pdf", mkdir=True)

@@ -1,16 +1,17 @@
+import argparse
+import os
+
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import argparse
-import time
-from config import fname, subjects, event_id, cmaps3, rois, vOT_id
-import os
 import pandas as pd
-from matplotlib import cm
-from scipy import stats
-from utility import convert_pvalue_to_asterisks
 import seaborn as sns  # version: 0.12.2
 import statannot
-import matplotlib as mpl
+from matplotlib import cm
+from scipy import stats
+
+from config import cmaps3, event_id, fname, subjects
+from utility import convert_pvalue_to_asterisks
 
 map_name = "RdYlBu_r"
 cmap = cm.get_cmap(map_name)
@@ -107,7 +108,9 @@ for freq_win in freq_wins:
     )
 
 data = pd.read_csv(f"{fname.data_conn}/all_clusters_gc_vOT_ST_freq.csv")
-fig, axs = plt.subplots(1, 3, figsize=(45, 10), sharex=True, sharey=True)
+fig, axs = plt.subplots(
+    nrows=1, ncols=3, figsize=(45, 10), sharex=True, sharey=True, squeeze=False
+)
 plt.ylim(-0.05, 0.1)
 for i, dire in enumerate(["Feedforward", "Feedback", "Net information flow"]):
     sns.barplot(
@@ -166,7 +169,6 @@ for i, dire in enumerate(["Feedforward", "Feedback", "Net information flow"]):
         ]
         pvals = dd[f"p_val{i}"]
         if (pvals <= 0.05).all():
-
             height = rect.get_height()
             y = np.max([height * 1.61, height + 0.013]) if height > 0 else 0.005
             asterisk = convert_pvalue_to_asterisks(pvals.values[0])

@@ -1,5 +1,5 @@
-# %%
-import argparse
+"""Make barplots for the time clusters in the vOT-ST connection."""
+
 from itertools import product
 
 import matplotlib as mpl
@@ -16,42 +16,16 @@ from utility import convert_pvalue_to_asterisks
 # Configure matplotlib
 mpl.rcParams["font.size"] = 35
 mpl.rcParams["figure.titlesize"] = 35
-
 map_name = "RdYlBu_r"
 cmap = mpl.colormaps.get_cmap(map_name)
 colors_dir = [cmap(1000000), cmap(0), "k"]
 
-parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument(
-    "--condition",
-    type=int,
-    default=2,
-    help="Condition to plot (0: RW, 1: RL1, 2: RL3)",
-)
-parser.add_argument(
-    "--roi",
-    type=str,
-    default="PV",
-    help="Seed region to compute gc or gc_tr: [PV, pC, AT, ST]",
-)
-args = parser.parse_args()
-
-# e.g., ff: pv->vOT; ff: vOT->ST, so the order is different
-if args.roi == "PV":
-    target, seed = args.roi, "vOT"
-else:
-    target, seed = "vOT", args.roi
-
-if args.roi == "ST":
-    time_wins = [
-        [29, 41],
-        [47, 63],
-        [108, 125],
-    ]  # ST-vOT, extracted from results in fig5a
-elif args.roi == "PV":
-    time_wins = [
-        [26, 34],
-    ]  # vOT-PV, extracted from results in fig5a
+target, seed = "vOT", "ST"
+time_wins = [
+    [29, 41],
+    [47, 63],
+    [108, 125],
+]  # ST-vOT, extracted from results in fig5a
 
 times = np.load(fname.times)
 times0 = times * 1000
@@ -125,12 +99,7 @@ for time_win in time_wins:
     )
 
 fig, axs = plt.subplots(
-    nrows=1,
-    ncols=3,
-    figsize=(45, 10),
-    sharex=True,
-    sharey=True,
-    squeeze=False,
+    nrows=1, ncols=3, figsize=(45, 10), sharex=True, sharey=True, squeeze=False
 )
 plt.ylim(-0.05, 0.1)
 for i, dire in enumerate(["Feedforward", "Feedback", "Net information flow"]):
@@ -203,5 +172,5 @@ axs[0, 1].legend_.remove()
 plt.tight_layout(rect=[0, 0.03, 1, 1])
 fig.supxlabel("Time")
 plt.subplots_adjust(wspace=0.02, hspace=0)
-plt.savefig(fname.fig_bar(roi=args.roi), bbox_inches="tight")
+plt.savefig(fname.fig_bar_time(roi="ST"), bbox_inches="tight")
 plt.show()

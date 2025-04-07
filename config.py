@@ -136,4 +136,5 @@ fname.add("fig_ctf", "{figures_dir}/source_leakage/wholebrain2{seed_roi}_ctf.pdf
 fname.add("fig_psi", "{figures_dir}/conn/psi_vOT_{roi}_band_{band}.pdf", mkdir=True)
 fname.add("fig_psi_contrast", "{figures_dir}/conn/psi_vOT_{roi}_band_{band}_contrast.pdf", mkdir=True)
 fname.add("fig_gc", "{figures_dir}/conn/gc_tfs_vOT_{roi}_{condition}.pdf", mkdir=True)
-fname.add("fig_bar", "{figures_dir}/conn/gc_barplot_vOT_{roi}_time.pdf", mkdir=True)
+fname.add("fig_bar_time", "{figures_dir}/conn/gc_barplot_vOT_{roi}_time.pdf", mkdir=True)
+fname.add("fig_bar_freq", "{figures_dir}/conn/gc_barplot_vOT_{roi}_freq.pdf", mkdir=True)

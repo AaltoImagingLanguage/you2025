@@ -11,6 +11,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
+import xarray as xr
 from mne.viz import Brain
 
 from config import event_id, fname, frequency_bands, onset, parc, time_windows, vOT_id
@@ -32,8 +33,7 @@ start_time1 = time.monotonic()
 warnings.filterwarnings("ignore")
 
 # Load the PSI connectivity data
-psi_ts = np.load(fname.psi(band=args.band))
-times = np.load(fname.times)
+psi_ts = xr.load_dataarray(fname.psi(band=args.band))
 
 # Load the spatial ROIs.
 mne.set_config("SUBJECTS_DIR", fname.mri_subjects_dir)
@@ -43,30 +43,26 @@ labels = [label for label in annotation if "Unknown" not in label.name]
 
 # Remove vOT (which is all zeros)
 del labels[vOT_id]
-psi_ts = np.delete(psi_ts, vOT_id, axis=2)
+psi_ts = psi_ts.drop_isel({"node_in -> node_out": vOT_id})
 
 # For the cluster permutation stats, we need the adjacency between ROIs.
 src_to = mne.read_source_spaces(fname.fsaverage_src, verbose=False)
 labels_adjacency_matrix = create_labels_adjacency_matrix(labels, src_to)
 
-# Compute connectivity during the baseline period.
-Xbl = psi_ts[:, :, :, (times >= onset) & (times <= 0)]
+# Perform baseline correction
+psi_ts -= psi_ts.sel(times=slice(onset, 0)).mean("times")
 
 fig, axis = plt.subplots(
     len(event_id),
     len(time_windows),
     figsize=(8 * len(time_windows), 4 * len(event_id)),
 )
-for event_index in range(len(event_id.values())):
+for event_index, condition in enumerate(event_id.keys()):
     for time_index, (tmin, tmax) in enumerate(time_windows):
-        Xcon = psi_ts[..., (times >= tmin) & (times <= tmax)]
+        Xcon = psi_ts.sel(condition=condition, times=slice(tmin, tmax))
 
-        # average baseline across the time window
-        b_mean = Xbl[:, event_index].mean(axis=-1, keepdims=True)
-
-        # baseline correction
-        X = (Xcon[:, event_index] - b_mean).transpose(0, 2, 1)
-
+        # Plot grand average PSI values
+        ga_con = Xcon.mean(dim=("subjects", "times"))
         brain = Brain(
             subject=SUBJECT,
             surf="inflated",
@@ -76,21 +72,17 @@ for event_index in range(len(event_id.values())):
             cortex="grey",
             background="white",
         )
-        ga_con = X.mean(axis=(0, 1))  # (n_labels) mean across subs then times
-
         # Normalize the values to [0, 1] range to map to colormap
         cmap = plt.get_cmap("coolwarm")
         norm = plt.Normalize(vmin=-0.01, vmax=0.01)
-
-        # Map values to colors
-        colors = cmap(norm(ga_con))
+        colors = cmap(norm(ga_con))  # map values to colors
         for i, color in enumerate(colors):
             brain.add_label(labels[i], color=color, borders=False, alpha=1)
         brain.add_annotation(parc, borders=True, color="white", remove_existing=False)
         brain.show_view()
 
         t0, clusters, pvals, _ = mne.stats.permutation_cluster_1samp_test(
-            X,
+            Xcon.data.transpose(0, 2, 1),
             n_permutations=5000,
             threshold=1,
             tail=0,

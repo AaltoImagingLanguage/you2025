@@ -5,9 +5,10 @@ import argparse
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import xarray as xr
 from mne.stats import permutation_cluster_1samp_test
 
-from config import cmaps3, event_id, fname, offset, onset, rois
+from config import cmaps3, event_id, f_down_sampling, fname, offset, onset, rois
 
 # Configure matplotlib
 mpl.rcParams["font.size"] = 14
@@ -36,26 +37,26 @@ parser.add_argument(
 args = parser.parse_args()
 
 # Load the PSI connectivity data
-psi_ts = np.load(fname.psi(band=args.band))[:, :, rois[args.roi], :]
-times = np.load(fname.times)
+psi_ts = xr.load_dataarray(fname.psi(band=args.band))[:, :, rois[args.roi]]
 
 if args.roi == "PV":
     # change the direction
     psi_ts = -psi_ts
 
+# Perform baseline correction (don't include t=0)
+psi_ts -= psi_ts.sel(times=slice(onset, 1 / f_down_sampling)).mean("times")
+
 fig, axis = plt.subplots(1, 1, figsize=(5, 4), sharey=True)
-Xmean = psi_ts[:, :, (times > onset) & (times < -0)].mean(axis=-1, keepdims=True)
 
 for e, event in enumerate(event_id.keys()):
-    # normalize by baseline
-    X = psi_ts[:, :, (times >= onset) & (times <= offset)] - Xmean
+    X = psi_ts.sel(condition=event, times=slice(onset, offset))
+    X_RL = X.mean("subjects")
+    times = X_RL.times.data * 1000
 
-    times0 = times * 1000
-    X_RL = X[:, e].mean(axis=0)
-    axis.plot(times0, X_RL, label=event[:3], color=cmaps3[e])
+    axis.plot(times, X_RL, label=event[:3], color=cmaps3[e])
 
     _, clusters, pvals, _ = permutation_cluster_1samp_test(
-        X[:, e, :],
+        X.data,
         n_permutations=5000,
         threshold=2,
         tail=0,
@@ -63,6 +64,7 @@ for e, event in enumerate(event_id.keys()):
         n_jobs=-1,
         seed=42,
     )
+    print(pvals)
     good_clusters_idx = np.where(pvals < 0.05)[0]
     good_clusters = [clusters[idx] for idx in good_clusters_idx]
     print("n_cluster=", len(good_clusters))
@@ -72,7 +74,7 @@ for e, event in enumerate(event_id.keys()):
         height = X_RL.min() * (1.1 + 0.01 * e)
     for cluster_ind in range(len(good_clusters)):
         axis.plot(
-            times0[good_clusters[cluster_ind]],
+            times[good_clusters[cluster_ind]],
             [height] * len(good_clusters[cluster_ind][0]),
             "-",
             color=cmaps3[e],
@@ -135,7 +137,7 @@ axis.annotate(
 
 axis.set_ylabel("PSI", ha="left", y=1, x=0.1, rotation=0, labelpad=0)
 fig.legend()
-plt.xlim([times0.min(), times0.max()])
+plt.xlim([times.min(), times.max()])
 plt.tight_layout()
 plt.savefig(fname.fig_psi(roi=args.roi, band=args.band), bbox_inches="tight")
 plt.show()

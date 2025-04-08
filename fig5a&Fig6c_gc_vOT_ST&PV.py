@@ -9,12 +9,13 @@ import mne
 import numpy as np
 from skimage.measure import find_contours
 
-from config import event_id, fname, offset, onset, rois, vOT_id
+from config import event_id, fname, offset, onset
 
 mpl.rcParams["font.size"] = 14
 mpl.rcParams["figure.titlesize"] = 16
 
 map_name = "RdYlBu_r"
+c = (128 / 255, 180 / 255, 90 / 255)  # color for the contrast between RL3-RL1
 cmap = mpl.colormaps.get_cmap(map_name)
 
 parser = argparse.ArgumentParser(description=__doc__)

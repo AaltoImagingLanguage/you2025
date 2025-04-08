@@ -1,13 +1,13 @@
-"""
-This script is used to compute the phase slope index (PSI) using the continuous
-wavelet transform (CWT) method FOR WHOLE BRAIN
+"""Compute the phase slope index (PSI) for the whole brain.
+
+Uses the continuous wavelet transform (CWT) method.
+
 ********************IMPORTANT********************
-access to personal data is required
+Access to personal data is required.
 """
 
 import argparse
 import time
-from itertools import product
 
 import mne
 import numpy as np
@@ -23,6 +23,8 @@ from config import (
     frequency_bands,
     lambda2_epoch,
     n_freq,
+    offset,
+    onset,
     parc,
     subjects,
     vOT_id,
@@ -35,17 +37,10 @@ labels = [label for label in annotation if "Unknown" not in label.name]
 print("downsampling:", f_down_sampling)
 
 
-baseline_onset = -0.2
-onset = -0.1
-offset = 1
-
-src_to = mne.read_source_spaces(fname.fsaverage_src, verbose=False)
-
-
-# %%
 def compute_psi_connectivity(subject):
     """Compute PSI connectivity for the given subject."""
     print(subject)
+    src_to = mne.read_source_spaces(fname.fsaverage_src, verbose=False)
 
     inverse_operator = read_inverse_operator(fname.inv(subject=subject), verbose=False)
     morph = mne.compute_source_morph(
@@ -63,9 +58,7 @@ def compute_psi_connectivity(subject):
             preload=True,
             verbose=False,
         )
-        epoch_condition = epoch_condition.crop(onset, offset).resample(
-            f_down_sampling
-        )  # in case downsample is needed
+        epoch_condition = epoch_condition.crop(onset, offset).resample(f_down_sampling)
         stcs = apply_inverse_epochs(
             epoch_condition,
             inverse_operator,
@@ -97,6 +90,10 @@ def compute_psi_connectivity(subject):
             [stc.data for stc in stcs_labels]
         )  # (trials, n_labels, timepoints)
 
+        # frequency band range
+        fmin, fmax = frequency_bands[arg.band]
+        freqs = np.linspace(fmin, fmax, int((fmax - fmin) * n_freq + 1))
+
         # compute PSI
         psi = phase_slope_index(
             stcs_data,
@@ -111,15 +108,13 @@ def compute_psi_connectivity(subject):
             verbose=False,
         )  # (n_labels, n_bands, n_times)->(137, 1, 130)
         con.append(psi.xarray)
-    # psi_fname = fname.conn_psi(sub=sub, cond=cond, nfreq=1, band="broadband")
-    # psi.save(psi_fname)
-    # print("done:" f"{psi_fname}")
     con = xr.concat(con, dim=xr.DataArray(list(event_id.keys()), dims="condition"))
-    print(con)
+    con = con.isel(freqs=0)  # collapse the freqs dimension
+    con.attrs["freqs_computed"] = con.attrs["freqs_computed"][0]
+    con.coords["times"] = con.coords["times"] + onset
 
     # Remove NetCDF incompatible attributes so it can be read with other engines then
     # just h5netcdf.
-    con.attrs["freqs_computed"] = con.attrs["freqs_computed"][0]
     del con.attrs["indices"]
     del con.attrs["n_epochs_used"]
     del con.attrs["n_tapers"]
@@ -136,22 +131,29 @@ parser.add_argument(
     default="broadband",
     help="frequency band to compute whole-cortex PSI",
 )
+parser.add_argument(
+    "-j",
+    "--n-jobs",
+    type=int,
+    default=1,
+    help="number of CPU cores to use",
+)
 arg = parser.parse_args()
 start_time1 = time.monotonic()
 
 # suffix for the output fil
 suffix = f"n_freq{n_freq}_fa_band_{arg.band}"
 
-# frequency band range
-fmin, fmax = frequency_bands[arg.band]
-freqs = np.linspace(fmin, fmax, int((fmax - fmin) * n_freq + 1))
-
-n_jobs = 1
-
-# parallelly run across all subjects and conditions
-xs = Parallel(n_jobs=n_jobs)(
+# parallelly run across all subjects
+psi = Parallel(n_jobs=arg.n_jobs)(
     delayed(compute_psi_connectivity)(subject) for subject in subjects
 )
-xs.to_netcdf(fname.conn_psi(band=arg.band))
+
+# As a final pseudonymization, we assign random subject labels.
+random_subjects = [f"random-s{i:02d}" for i in range(len(subjects))]
+np.random.shuffle(random_subjects)
+psi = xr.concat(psi, xr.DataArray(random_subjects, dims="subjects"))
+psi = psi.sortby("subjects")  # re-order the data to follow the random subject labels
+psi.to_netcdf(fname.psi(band=arg.band))
 print((time.monotonic() - start_time1) / 60)
 print("FINISHED!")

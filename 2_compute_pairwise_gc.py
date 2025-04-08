@@ -1,94 +1,80 @@
+"""Compute Granger causality (GC) between a seed region and vOT.
+
+Uses the continuous wavelet transform (CWT) method.
+
+********************IMPORTANT********************
+access to personal data is required.
 """
 
-This script is used to compute the Granger causality using the continuous
-wavelet transform (CWT) method between left vOT and seed region.
-********************IMPORTANT********************
-access to personal data is required
-"""
+import argparse
+import time
+
+import mne
 
 # %%
 import numpy as np
-import argparse
-import time
-from itertools import product
+import xarray as xr
 from joblib import Parallel, delayed
-
-from mne_connectivity import spectral_connectivity_epochs
-import mne
-from config import (
-    fname,
-    parc,
-    subjects,
-    rois,
-    vOT_id,
-    onset,
-    offset,
-    event_id,
-    f_down_sampling,
-    lambda2_epoch,
-    fmin,
-    fmax,
-    n_rank,
-    n_freq,
-    frequency_bands
-)
-from sklearn.decomposition import PCA
-import os
 from mne import compute_source_morph, read_epochs
 from mne.minimum_norm import apply_inverse_epochs, read_inverse_operator
-from utility import labels_indices
+from mne_connectivity import spectral_connectivity_epochs
+from sklearn.decomposition import PCA
 
-# import warnings
+from config import (
+    event_id,
+    f_down_sampling,
+    fmax,
+    fmin,
+    fname,
+    lambda2_epoch,
+    n_freq,
+    n_lag,
+    n_rank,
+    offset,
+    onset,
+    parc,
+    rois,
+    subjects,
+    vOT_id,
+)
 
-# # Ignore all warnings
-# warnings.filterwarnings('ignore')
-
-plot = False
-
-
-hemi = "lh"
-
+mne.set_config("SUBJECTS_DIR", fname.private_mri_subjects_dir)
 SUBJECT = "fsaverage"
-
-mne.set_config("SUBJECTS_DIR", fname.mri_subjects_dir)
 annotation = mne.read_labels_from_annot("fsaverage", parc=parc, verbose=False)
 labels = [label for label in annotation if "Unknown" not in label.name]
-
-# print('downsampling:', f_down_sampling)
-# %%
+print("downsampling:", f_down_sampling)
 
 
-# %%
-def main_conn(ii, jj, sub):
-    label_indices = labels_indices(labels, stc)
+def compute_gc_connectivity(seed, subject):
+    """Compute Granger causality connectivity for the given subject."""
     src_to = mne.read_source_spaces(fname.fsaverage_src, verbose=False)
 
-    # seed and target name
-    seed = [k for k, v in rois.items() if v == ii][0]
-    target = [k for k, v in rois.items() if v == jj][0]
+    # seed and target indices
+    seed_label = labels[rois[seed]]
+    target_label = labels[vOT_id]
 
     inverse_operator = read_inverse_operator(
-        fname.inv(subject=sub),
+        fname.inv(subject=subject),
         verbose=False,
     )
     # morph_labels
     morph = compute_source_morph(
         inverse_operator["src"],
-        subject_from=sub,
+        subject_from=subject,
         subject_to=SUBJECT,
         src_to=src_to,
         verbose=False,
     )
 
-    for cond in list(event_id.keys()):
-
-        e0 = time.time()
+    e0 = time.time()
+    con = []
+    for condition in event_id.keys():
         epoch_condition = read_epochs(
-            fname.epo_con(subject=sub, condition=cond), preload=True, verbose=False
+            fname.epo_con(subject=subject, condition=condition),
+            preload=True,
+            verbose=False,
         )
-        epoch_condition = (
-            epoch_condition.copy().crop(onset, offset).resample(f_down_sampling)
-        )
+        epoch_condition = epoch_condition.crop(onset, offset).resample(f_down_sampling)
         stcs = apply_inverse_epochs(
             epoch_condition,
             inverse_operator,
@@ -99,13 +85,27 @@ def main_conn(ii, jj, sub):
         )
         stcs_morph = [morph.apply(stc) for stc in stcs]
 
+        # Figure out which vertices to use
+        vertices_lh, vertices_rh = stcs_morph[0].vertices
+        if seed_label.hemi == "lh":
+            seed_ind = np.searchsorted(
+                vertices_lh, np.intersect1d(seed_label.vertices, vertices_lh)
+            )
+        else:
+            seed_ind = len(vertices_lh) + np.searchsorted(
+                vertices_rh, np.intersect1d(seed_label.vertices, vertices_rh)
+            )
+        if target_label.hemi == "lh":
+            target_ind = np.searchsorted(
+                vertices_lh, np.intersect1d(target_label.vertices, vertices_lh)
+            )
+        else:
+            target_ind = len(vertices_lh) + np.searchsorted(
+                vertices_rh, np.intersect1d(target_label.vertices, vertices_rh)
+            )
+
         sfreq = f_down_sampling  # Sampling frequency
         del epoch_condition
-
-        indices_01 = (
-            np.array([label_indices[ii]]),
-            np.array([label_indices[jj]]),
-        )
 
         # a list of SourceEstimate objects -> array-like (135,5124,130)
         stcs_data = np.array(
@@ -113,8 +113,8 @@ def main_conn(ii, jj, sub):
         )  # (trials,vertices/n_labels,timepoints)
         # determine the rank
         ranks = []
-        for indices in indices_01:
-            a = stcs_data[:, indices[0], :]
+        for indices in [seed_ind, target_ind]:
+            a = stcs_data[:, indices, :]
             b = np.swapaxes(a, 2, 1).reshape(
                 (-1, a.shape[1])
             )  # (trials*timepoints,vertices)
@@ -125,6 +125,9 @@ def main_conn(ii, jj, sub):
         rank = np.array(ranks).min()
         del stcs, stcs_morph, a, b
 
+        # frequency band range
+        freqs = np.linspace(fmin, fmax, int((fmax - fmin) * n_freq + 1))
+
         # multivariate gc
         gc = spectral_connectivity_epochs(
             stcs_data,
@@ -133,21 +136,32 @@ def main_conn(ii, jj, sub):
             cwt_freqs=freqs,
             cwt_n_cycles=freqs / 2,
             sfreq=sfreq,
-            indices=indices_01,
+            indices=([seed_ind, target_ind], [target_ind, seed_ind]),
             fmin=fmin,
             fmax=fmax,
-            rank=(np.array([rank]), np.array([rank])),
-            gc_n_lags=arg.n_lag,
+            rank=([rank, rank], [rank, rank]),
+            gc_n_lags=n_lag,
             verbose=False,
-            # n_jobs=-1,
+            n_jobs=1,
         )
+        con.append(gc.xarray)
+    con = xr.concat(con, dim=xr.DataArray(list(event_id.keys()), dims="condition"))
+    con.coords["times"] = con.coords["times"] + onset
+    con.attrs["rank"] = rank
 
-        # %%
-        gc.save(f"{folder}/{sub}_{cond}_{seed}_{target}_{method}_{hemi}_{suffix}")
-        print("done:" f"{folder}/{sub}_{cond}_{seed}_{target}_{method}_{hemi}_{suffix}")
+    # Remove NetCDF incompatible attributes so it can be read with other engines
+    # then just h5netcdf.
+    del con.attrs["patterns"]
+    del con.attrs["indices"]
+    del con.attrs["events"]
+    del con.attrs["node_names"]
+    del con.attrs["times_used"]
+    del con.attrs["n_tapers"]
 
-        e1 = time.time()
-        print("time cost: ", (e1 - e0) / 60)
+    print("done:", subject)
+    e1 = time.time()
+    print("time cost: ", (e1 - e0) / 60)
+    return con
 
 
 # %%
@@ -164,7 +178,7 @@ parser.add_argument(
     "--seed",
     type=str,
     default="ST",
-    help="seed region to compute gc or gc_tr: [OP, pC, AT, ST]",
+    help="seed region to compute gc or gc_tr: [PV, pC, AT, ST]",
 )
 
 arg = parser.parse_args()
@@ -174,31 +188,33 @@ method = arg.method
 
 seed_id = rois[arg.seed]
 
-
-freqs = np.linspace(fmin, fmax, int((fmax - fmin) * n_freq + 1))
-
-suffix = f"n_freq{n_freq}_fa_rank_pca"
-
-folder = f"{fname.conn_dir}/{method}/"
-if not os.path.exists(folder):
-    os.makedirs(folder)
-
 start_time1 = time.monotonic()
 
-
 # index of seed and target region
-i_seeds = [seed_id, vOT_id]
-j_targets = [seed_id, vOT_id]
+seeds = [arg.seed, "vOT"]
+targets = [arg.seed, "vOT"]
 
-# read a source estimate to get the vertices
+# Read a source estimate to get the vertices.
 stc = mne.read_source_estimate(fname.ga_stc(category="RW"), "fsaverage")
 
-# parallelly run gc/tr_gc across all subjects (seed -> target and target -> seed)
-results = Parallel(n_jobs=n_jobs)(
-    delayed(main_conn)(ii, jj, sub)
-    for ii, jj, sub in product(i_seeds, j_targets, subjects)
-    if ii != jj
+# Run gc/tr_gc across all subjects in parallel.
+gc = Parallel(n_jobs=n_jobs)(
+    delayed(compute_gc_connectivity)(arg.seed, subject) for subject in subjects
 )
+
+# As a final pseudonymization, we assign random subject labels.
+random_subjects = [f"random-s{i:02d}" for i in range(len(subjects))]
+np.random.shuffle(random_subjects)
+gc = xr.concat(gc, xr.DataArray(random_subjects, dims="subjects"))
+gc = gc.sortby("subjects")  # re-order the data to follow the random subject labels
+
+to_vOT = gc.sel({"node_in -> node_out": "0"})
+to_vOT.attrs["seed"] = arg.seed
+to_vOT.to_netcdf(fname.gc(method="gc", a=arg.seed, b="vOT"))
+
+from_vOT = gc.sel({"node_in -> node_out": "1"})
+from_vOT.attrs["target"] = arg.seed
+from_vOT.to_netcdf(fname.gc(method="gc", a="vOT", b=arg.seed))
 
 print((time.monotonic() - start_time1) / 60)
 print("FINISHED!")

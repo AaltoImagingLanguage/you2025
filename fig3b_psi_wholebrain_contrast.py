@@ -3,11 +3,13 @@
 import argparse
 import time
 import warnings
+from itertools import combinations
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
+import xarray as xr
 from mne.viz import Brain
 
 from config import event_id, fname, onset, parc, time_windows, vOT_id
@@ -29,8 +31,7 @@ start_time1 = time.monotonic()
 warnings.filterwarnings("ignore")
 
 # Load the PSI connectivity data
-psi_ts = np.load(fname.psi(band=args.band))
-times = np.load(fname.times)
+psi_ts = xr.load_dataarray(fname.psi(band=args.band))
 
 # Load the spatial ROIs.
 mne.set_config("SUBJECTS_DIR", fname.mri_subjects_dir)
@@ -40,34 +41,27 @@ labels = [label for label in labels if "Unknown" not in label.name]
 
 # Remove vOT (which is all zeros)
 del labels[vOT_id]
-psi_ts = np.delete(psi_ts, vOT_id, axis=2)
+psi_ts = psi_ts.drop_isel({"node_in -> node_out": vOT_id})
 
 # For the cluster permutation stats, we need the adjacency between ROIs.
 src_to = mne.read_source_spaces(fname.fsaverage_src, verbose=False)
 labels_adjacency_matrix = create_labels_adjacency_matrix(labels, src_to)
 
-# Compute connectivity during the baseline period.
-Xbl = psi_ts[:, :, :, (times >= onset) & (times <= 0)]
+# Perform baseline correction
+psi_ts -= psi_ts.sel(times=slice(onset, 0)).mean("times")
 
 fig, axis = plt.subplots(3, len(time_windows), figsize=(8 * len(time_windows), 12))
 
 # compare RL1-RW and RL1-RL3
-for contrast_num, (condition1, condition2) in enumerate(
-    [[1, 0], [-1, 0], [-1, 1]]
-):  # RL1-RW,  RL3-RW, RL3-RL1,
+for contrast_num, (cond1, cond2) in enumerate(combinations(event_id.keys(), 2)):
     for jj, (tmin, tmax) in enumerate(time_windows):
-        Xcon = psi_ts[:, :, :, (times >= tmin) & (times <= tmax)]  # (23,4,137,90)
-
-        # condition 1
-        b_mean0 = Xbl[:, condition2, :, :].mean(axis=-1, keepdims=True)
-        X2 = Xcon[:, condition2, :] - b_mean0
-
-        # condition 2
-        b_mean = Xbl[:, condition1, :, :].mean(axis=-1, keepdims=True)
-        X1 = Xcon[:, condition1, :] - b_mean
+        Xcon = psi_ts.sel(times=slice(tmin, tmax))
 
         # contrast between condition 1 and 2
-        X = (X1 - X2).transpose(0, 2, 1)
+        Xcon = Xcon.sel(condition=cond2) - Xcon.sel(condition=cond1)
+
+        # Plot grand average PSI values
+        ga_con = Xcon.mean(dim=("subjects", "times"))
         brain = Brain(
             subject=SUBJECT,
             surf="inflated",
@@ -77,21 +71,18 @@ for contrast_num, (condition1, condition2) in enumerate(
             cortex="grey",
             background="white",
         )
-        stc = np.mean(X, axis=0).mean(0)  # (n_labels)
+
         # Normalize the values to [0, 1] range to map to colormap
         cmap = plt.get_cmap("coolwarm")
-
         norm = plt.Normalize(vmin=-0.01, vmax=0.01)
-
-        # Map values to colors
-        colors = cmap(norm(stc))
+        colors = cmap(norm(ga_con))  # map values to colors
         for i, color in enumerate(colors):
             brain.add_label(labels[i], color=color, borders=False, alpha=1)
         brain.add_annotation(parc, borders=True, color="white", remove_existing=False)
         brain.show_view()
 
         _, clusters, pvals, _ = mne.stats.permutation_cluster_1samp_test(
-            X,
+            Xcon.data.transpose(0, 2, 1),
             n_permutations=5000,
             threshold=1,
             tail=0,
@@ -116,9 +107,7 @@ for contrast_num, (condition1, condition2) in enumerate(
 
         brain.close()
         axis[0, jj].set_title(f"{int(tmin * 1000)}-{int(tmax * 1000)} ms")
-        axis[contrast_num, 0].set_ylabel(
-            f"{list(event_id.keys())[condition1][:3]}-{list(event_id.keys())[condition2][:3]}"
-        )
+        axis[contrast_num, 0].set_ylabel(f"{cond1[:3]}-{cond2[:3]}")
 for ax in axis.flat:
     ax.set_xticks([])
     ax.set_yticks([])

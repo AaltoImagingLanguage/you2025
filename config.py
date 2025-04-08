@@ -120,9 +120,8 @@ fname.add("sp", "ico4")  # add this so we can use it in the filenames below
 fname.add("fsaverage_src", "{mri_subjects_dir}/fsaverage/fsaverage-{sp}-src.fif")
 fname.add("psf", "{data_dir}/source_leakage/leakage_ave_psfs_{seed_roi}-wholebrain.npy")
 fname.add("ctf", "{data_dir}/source_leakage/leakage_ave_ctfs_wholebrain-{seed_roi}.npy")
-fname.add("psi", "{data_dir}/connectivity/psi_vOT_wholebrain_band_{band}.npy")
-fname.add("gc", "{data_dir}/connectivity/gc_{a}_{b}.npy")
-fname.add("gc_tr", "{data_dir}/connectivity/gc_tr_{a}_{b}.npy")
+fname.add("psi", "{data_dir}/connectivity/psi_vOT_wholebrain_band_{band}.nc")
+fname.add("gc", "{data_dir}/connectivity/{method}_{a}_{b}.nc")
 fname.add("times", "{data_dir}/connectivity/time_points.npy")
 fname.add("freqs", "{data_dir}/connectivity/freq_points.npy")
 
@@ -133,10 +132,6 @@ fname.add("fwd_r", "{subjects_dir}/{subject}-{sp}-fwd.fif")
 fname.add("inv", "{subjects_dir}/{subject}-{sp}-inv.fif")
 fname.add("epo_con", "{subjects_dir}/{subject}-{condition}-epo.fif")
 fname.add("ga_stc", "{subjects_dir}/grand_average_{category}_stc")
-
-# Analysis files produced using private data
-fname.add("conn_dir", conn_dir, mkdir=True)
-fname.add("conn_psi", "{conn_dir}/psi_vOT_wholebrain_band_{band}.nc", mkdir=True)
 
 # Figures
 fname.add("fig_psf", "{figures_dir}/source_leakage/{seed_roi}2wholebrain_psf.pdf", mkdir=True)

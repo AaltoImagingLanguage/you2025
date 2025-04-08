@@ -1,7 +1,6 @@
 # %%
 # import figure_setting
 import argparse
-import os
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -177,7 +176,9 @@ ax_col.spines[
         "right",
         "top",
     ]
-].set_visible(False)  # remove the right and top line frame
+].set_visible(
+    False
+)  # remove the right and top line frame
 
 ax_row = fig.add_subplot(grid[1, 1])
 X = gc_tfs0[..., (times >= onset) & (times <= offset)].copy().mean(-1)
@@ -209,7 +210,7 @@ if len(good_clusters) > 0:
         good_clusters[0][0],
         freqs[good_clusters[0][-1]],
         freqs[good_clusters[0][0]],
-        c,
+        args.condition,
     )
 X = gc_tfs1[..., (times >= onset) & (times <= offset)].copy().mean(-1)
 X_RL = X[:, args.condition, :].copy().mean(0)
@@ -251,7 +252,9 @@ ax_row.spines[
         "right",
         "top",
     ]
-].set_visible(False)  # remove the right and top line frame
+].set_visible(
+    False
+)  # remove the right and top line frame
 cbar_ax = fig.add_axes([0.132, -0.02, 0.5, 0.02])
 cbar = fig.colorbar(im, cbar_ax, orientation="horizontal", label="Net GC")
 if args.condition == 0:

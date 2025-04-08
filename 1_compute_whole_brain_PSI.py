@@ -27,7 +27,7 @@ from config import (
     lambda2_epoch,
     onset,
     offset,
-    n_freq
+    n_freq,
 )
 
 
@@ -118,8 +118,8 @@ def main_conn(cond, sub, ii):
         verbose=False,
     )  # (n_labels, n_bands, n_times)->(137, 1, 130)
 
-    psi.save(f"{folder}/{sub}_{cond}_{ii}_psi_lh_{suffix}")
-    print("done:" f"{folder}/{sub}_{cond}_{ii}_psi_lh_{suffix}")
+    psi.save(f"{fname.conn_dir}/{sub}_{cond}_{ii}_psi_lh_{suffix}")
+    print("done:" f"{fname.conn_dir}/{sub}_{cond}_{ii}_psi_lh_{suffix}")
 
 
 # %%
@@ -140,11 +140,6 @@ suffix = f"n_freq{n_freq}_fa_band_{arg.band}"
 # frequency band range
 fmin, fmax = frequency_bands[arg.band]
 freqs = np.linspace(fmin, fmax, int((fmax - fmin) * arg.n_freq + 1))
-# %
-#
-folder = f"{fname.conn_dir}/"
-if not os.path.exists(folder):
-    os.makedirs(folder)
 
 
 n_jobs = 1

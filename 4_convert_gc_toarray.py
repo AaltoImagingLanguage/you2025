@@ -43,10 +43,10 @@ def gc2array(
 
         for c, cond in enumerate(event_id):
             gc = read_connectivity(
-                f"{folder}/{method}/{sub}_{cond}_{seed}_{target}_{method}_{hemi}_{suffix}"
+                f"{fname.conn_dir}/{method}/{sub}_{cond}_{seed}_{target}_{method}_{hemi}_{suffix}"
             )
             gc_tr = read_connectivity(
-                f"{folder}/{method}_tr/{sub}_{cond}_{seed}_{target}_{method}_tr_{hemi}_{suffix}"
+                f"{fname.conn_dir}/{method}_tr/{sub}_{cond}_{seed}_{target}_{method}_tr_{hemi}_{suffix}"
             )
             if not os.path.exists(f"{fname.data_conn}/freq_points.npy"):
                 freqs = np.array(gc.freqs)
@@ -84,10 +84,6 @@ j_targets = [seed_id, vOT_id]
 
 # Parallel
 start_time1 = time.monotonic()
-
-folder = f"{fname.conn_dir}/"
-if not os.path.exists(folder):
-    os.makedirs(folder)
 
 suffix = f"n_freq{n_freq}_fa_rank_pca"
 # shuffle the order of subjects

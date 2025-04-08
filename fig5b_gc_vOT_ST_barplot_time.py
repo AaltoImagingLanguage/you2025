@@ -4,9 +4,9 @@ from itertools import product
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns  # version: 0.12.2
+import xarray as xr
 from scipy import stats
 from statannotations.Annotator import Annotator
 
@@ -22,21 +22,18 @@ colors_dir = [cmap(1000000), cmap(0), "k"]
 
 target, seed = "vOT", "ST"
 time_wins = [
-    [29, 41],
-    [47, 63],
-    [108, 125],
-]  # ST-vOT, extracted from results in fig5a
-
-times = np.load(fname.times)
-times0 = times * 1000
+    [0.090, 0.210],
+    [0.270, 0.430],
+    [0.880, 1.050],
+]  # ST-vOT, in seconds, extracted from results in fig5a
 
 # gc and gc_tr from seed to target
-gc_tfs_ab = np.load(fname.gc(a=seed, b=target))
-gc_tfs_ab_tr = np.load(fname.gc_tr(a=seed, b=target))
+gc_tfs_ab = xr.load_dataarray(fname.gc(method="gc", a=seed, b=target))
+gc_tfs_ab_tr = xr.load_dataarray(fname.gc(method="gc_tr", a=seed, b=target))
 
 # gc and gc_tr from target to seed
-gc_tfs_ba = np.load(fname.gc(a=target, b=seed))
-gc_tfs_ba_tr = np.load(fname.gc_tr(a=target, b=seed))
+gc_tfs_ba = xr.load_dataarray(fname.gc(method="gc", a=target, b=seed))
+gc_tfs_ba_tr = xr.load_dataarray(fname.gc(method="gc_tr", a=target, b=seed))
 
 # net gc
 gc_tfs = gc_tfs_ab - gc_tfs_ab_tr - gc_tfs_ba + gc_tfs_ba_tr
@@ -46,6 +43,8 @@ gc_tfs0 = gc_tfs_ab - gc_tfs_ab_tr
 gc_tfs1 = gc_tfs_ba - gc_tfs_ba_tr
 
 del gc_tfs_ab, gc_tfs_ab_tr, gc_tfs_ba, gc_tfs_ba_tr
+
+times = gc_tfs.times.data * 1000
 
 data_dict = {
     "type": [],
@@ -58,28 +57,27 @@ data_dict = {
     "p_val1": [],
 }
 
-for t, time_id in enumerate(time_wins):
-    for c in [0, 1, -1]:
-        data_dict["type"].extend([list(event_id.keys())[c][:3]] * len(subjects))
+for time_from, time_to in time_wins:
+    for condition in ["RW", "RL1PW", "RL3PW"]:
+        data_dict["type"].extend([condition[:3]] * len(subjects))
         data_dict["Time"].extend(
-            [f"{round(times0[time_id[0]])}-{round(times0[time_id[1]])} ms"]
-            * len(subjects)
+            [f"{time_from * 1000}-{time_to * 1000} ms"] * len(subjects)
         )
 
-        X = gc_tfs0[:, c, :, time_id[0] : time_id[1] + 1].copy().mean(1)
-        Xmean = X.mean(-1)
+        X = gc_tfs0.sel(condition=condition, times=slice(time_from, time_to))
+        Xmean = X.mean(dim=("freqs", "times")).data
         p = stats.ttest_1samp(Xmean, popmean=0)[1]
         data_dict["Feedforward"].extend(Xmean)
         data_dict["p_val0"].extend([p] * len(subjects))
 
-        X = gc_tfs1[:, c, :, time_id[0] : time_id[1] + 1].copy().mean(1)
-        Xmean = X.mean(-1)
+        X = gc_tfs1.sel(condition=condition, times=slice(time_from, time_to))
+        Xmean = X.mean(dim=("freqs", "times")).data
         p = stats.ttest_1samp(Xmean, popmean=0)[1]
         data_dict["Feedback"].extend(Xmean)
         data_dict["p_val1"].extend([p] * len(subjects))
 
-        X = gc_tfs[:, c, :, time_id[0] : time_id[1] + 1].copy().mean(1)
-        Xmean = X.mean(-1)
+        X = gc_tfs.sel(condition=condition, times=slice(time_from, time_to))
+        Xmean = X.mean(dim=("freqs", "times")).data
         p = stats.ttest_1samp(Xmean, popmean=0)[1]
         data_dict["Net information flow"].extend(Xmean)
         data_dict["p_val2"].extend([p] * len(subjects))
@@ -88,8 +86,8 @@ data = pd.DataFrame(data_dict)
 # data.to_csv(f"{fname.data_conn}/all_clusters_gc_vOT_ST_time.csv")
 
 box_pairs = []
-for time_win in time_wins:
-    time = f"{round(times0[time_win[0]])}-{round(times0[time_win[1]])} ms"
+for time_from, time_to in time_wins:
+    time = f"{time_from * 1000}-{time_to * 1000} ms"
     box_pairs.extend(
         [
             ((time, "RW"), (time, "RL3")),
@@ -115,7 +113,7 @@ for i, dire in enumerate(["Feedforward", "Feedback", "Net information flow"]):
     n_bars = len(time_wins) * len(event_id)
     bar_types = product(event_id.keys(), time_wins)
     for (condition, (time_from, time_to)), rect in zip(bar_types, ax.patches):
-        time = f"{round(times0[time_from])}-{round(times0[time_to])} ms"
+        time = f"{time_from*1000}-{time_to * 1000} ms"
         dd = data.query(f"Time == '{time}' and type == '{condition[:3]}'")
         pvals = dd[f"p_val{i}"]
         if (pvals <= 0.05).all():

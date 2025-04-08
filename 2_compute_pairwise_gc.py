@@ -208,11 +208,11 @@ np.random.shuffle(random_subjects)
 gc = xr.concat(gc, xr.DataArray(random_subjects, dims="subjects"))
 gc = gc.sortby("subjects")  # re-order the data to follow the random subject labels
 
-to_vOT = gc.sel({"node_in -> node_out": "0"})
+to_vOT = gc.sel({"node_in -> node_out": "0"}, drop=True)
 to_vOT.attrs["seed"] = arg.seed
 to_vOT.to_netcdf(fname.gc(method="gc", a=arg.seed, b="vOT"))
 
-from_vOT = gc.sel({"node_in -> node_out": "1"})
+from_vOT = gc.sel({"node_in -> node_out": "1"}, drop=True)
 from_vOT.attrs["target"] = arg.seed
 from_vOT.to_netcdf(fname.gc(method="gc", a="vOT", b=arg.seed))
 

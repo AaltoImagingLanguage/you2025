@@ -72,10 +72,10 @@ for e, event in enumerate(event_id.keys()):
         height = X_RL.max() * (1.1 + 0.01 * e)
     else:
         height = X_RL.min() * (1.1 + 0.01 * e)
-    for cluster_ind in range(len(good_clusters)):
+    for cluster in good_clusters:
         axis.plot(
-            times[good_clusters[cluster_ind]],
-            [height] * len(good_clusters[cluster_ind][0]),
+            times[cluster],
+            [height] * len(cluster[0]),
             "-",
             color=cmaps3[e],
             lw=3.5,

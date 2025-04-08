@@ -6,10 +6,10 @@ from itertools import combinations
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from mne.stats import permutation_cluster_1samp_test
 import xarray as xr
+from mne.stats import permutation_cluster_1samp_test
 
-from config import cmaps3, event_id, fname, offset, onset, rois, f_down_sampling
+from config import cmaps3, event_id, f_down_sampling, fname, offset, onset, rois
 
 # Configure matplotlib
 mpl.rcParams["font.size"] = 14
@@ -74,10 +74,10 @@ for contrast_num, (cond1, cond2) in enumerate(combinations(event_id.keys(), 2)):
     good_clusters_idx = np.where(pvals < 0.05)[0]
     good_clusters = [clusters[idx] for idx in good_clusters_idx]
     print("n_cluster=", len(good_clusters))
-    for jj in range(len(good_clusters)):
+    for cluster in good_clusters:
         axis.plot(
-            times[good_clusters[jj]],
-            [-0.063 * (1 + 0.03 * contrast_num)] * len(good_clusters[jj][0]),
+            times[cluster],
+            [-0.063 * (1 + 0.03 * contrast_num)] * len(cluster[0]),
             "--",
             color=colors[label],
             lw=3.5,

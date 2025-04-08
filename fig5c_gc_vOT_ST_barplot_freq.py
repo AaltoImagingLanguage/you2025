@@ -1,5 +1,3 @@
-import argparse
-import os
 from itertools import product
 
 import matplotlib as mpl
@@ -7,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns  # version: 0.12.2
+import xarray as xr
 from scipy import stats
 from statannotations.Annotator import Annotator
 
@@ -21,36 +20,19 @@ map_name = "RdYlBu_r"
 cmap = mpl.colormaps.get_cmap(map_name)
 colors_dir = [cmap(1000000), cmap(0), "k"]
 
-parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument(
-    "--roi",
-    type=str,
-    default="ST",
-    help="Seed region to compute gc or gc_tr: [PV, pC, AT, ST]",
-)
-args = parser.parse_args()
-
-# e.g., ff: pv->vOT; ff: vOT->ST, so the order is different
-if args.roi == "PV":
-    target, seed = args.roi, "vOT"
-else:
-    target, seed = "vOT", args.roi
-
-if args.roi == "ST":
-    freq_wins = [[7, 14], [26, 29]]  # ST-vOT, extracted from results in fig5a
-else:
-    raise NotImplementedError("No windows defined yet for this ROI")
-
-
-freqs = np.load(fname.freqs)
+seed, target = "vOT", "ST"
+freq_wins = [
+    [11.0, 18.0],
+    [30.0, 33.0],
+]  # ST-vOT, in Hertz, extracted from results in fig5a
 
 # gc and gc_tr from seed to target
-gc_tfs_ab = np.load(fname.gc(a=seed, b=target))
-gc_tfs_ab_tr = np.load(fname.gc_tr(a=seed, b=target))
+gc_tfs_ab = xr.load_dataarray(fname.gc(method="gc", a=seed, b=target))
+gc_tfs_ab_tr = xr.load_dataarray(fname.gc(method="gc_tr", a=seed, b=target))
 
 # gc and gc_tr from target to seed
-gc_tfs_ba = np.load(fname.gc(a=target, b=seed))
-gc_tfs_ba_tr = np.load(fname.gc_tr(a=target, b=seed))
+gc_tfs_ba = xr.load_dataarray(fname.gc(method="gc", a=target, b=seed))
+gc_tfs_ba_tr = xr.load_dataarray(fname.gc(method="gc_tr", a=target, b=seed))
 
 # net gc
 gc_tfs = gc_tfs_ab - gc_tfs_ab_tr - gc_tfs_ba + gc_tfs_ba_tr
@@ -61,6 +43,7 @@ gc_tfs1 = gc_tfs_ba - gc_tfs_ba_tr
 
 del gc_tfs_ab, gc_tfs_ab_tr, gc_tfs_ba, gc_tfs_ba_tr
 
+freqs = gc_tfs.freqs.data
 
 data_dict = {
     "type": [],
@@ -73,28 +56,25 @@ data_dict = {
     "p_val1": [],
 }
 
-for t, freq_id in enumerate(freq_wins):
-    for c in [0, 1, -1]:
-        data_dict["type"].extend([list(event_id.keys())[c][:3]] * len(subjects))
-        data_dict["Frequency"].extend(
-            [f"{round(freqs[freq_id[0]])}-{round(freqs[freq_id[1]])} Hz"]
-            * len(subjects)
-        )
+for freq_from, freq_to in freq_wins:
+    for condition in ["RW", "RL1PW", "RL3PW"]:
+        data_dict["type"].extend([condition[:3]] * len(subjects))
+        data_dict["Frequency"].extend([f"{freq_from}-{freq_to} Hz"] * len(subjects))
 
-        X = gc_tfs0[:, c, freq_id[0] : freq_id[1] + 1, :].copy().mean(-1)
-        Xmean = X.mean(-1)
+        X = gc_tfs0.sel(condition=condition, freqs=slice(freq_from, freq_to))
+        Xmean = X.mean(dim=("freqs", "times")).data
         p = stats.ttest_1samp(Xmean, popmean=0)[1]
         data_dict["Feedforward"].extend(Xmean)
         data_dict["p_val0"].extend([p] * len(subjects))
 
-        X = gc_tfs1[:, c, freq_id[0] : freq_id[1] + 1, :].copy().mean(-1)
-        Xmean = X.mean(-1)
+        X = gc_tfs1.sel(condition=condition, freqs=slice(freq_from, freq_to))
+        Xmean = X.mean(dim=("freqs", "times")).data
         p = stats.ttest_1samp(Xmean, popmean=0)[1]
         data_dict["Feedback"].extend(Xmean)
         data_dict["p_val1"].extend([p] * len(subjects))
 
-        X = gc_tfs[:, c, freq_id[0] : freq_id[1] + 1, :].copy().mean(-1)
-        Xmean = X.mean(-1)
+        X = gc_tfs.sel(condition=condition, freqs=slice(freq_from, freq_to))
+        Xmean = X.mean(dim=("freqs", "times")).data
         p = stats.ttest_1samp(Xmean, popmean=0)[1]
         data_dict["Net information flow"].extend(Xmean)
         data_dict["p_val2"].extend([p] * len(subjects))
@@ -104,8 +84,8 @@ data = pd.DataFrame(data_dict)
 
 
 box_pairs = []
-for freq_win in freq_wins:
-    freq = f"{round(freqs[freq_win[0]])}-{round(freqs[freq_win[1]])} Hz"
+for freq_from, freq_to in freq_wins:
+    freq = f"{freq_from}-{freq_to} Hz"
     box_pairs.extend(
         [
             ((freq, "RW"), (freq, "RL3")),
@@ -163,7 +143,7 @@ for i, dire in enumerate(["Feedforward", "Feedback", "Net information flow"]):
     n_bars = len(freq_wins) * len(event_id)
     bar_types = product(event_id.keys(), freq_wins)
     for (condition, (freq_from, freq_to)), rect in zip(bar_types, ax.patches):
-        freq = f"{round(freqs[freq_from])}-{round(freqs[freq_to])} Hz"
+        freq = f"{freq_from}-{freq_to} Hz"
         dd = data.query(f"Frequency == '{freq}' and type == '{condition[:3]}'")
         pvals = dd[f"p_val{i}"]
         if (pvals <= 0.05).all():
@@ -193,5 +173,5 @@ axs[0, 1].legend_.remove()
 plt.tight_layout(rect=[0, 0.03, 1, 1])
 fig.supxlabel("Frequency")
 plt.subplots_adjust(wspace=0.4, hspace=0)
-plt.savefig(fname.fig_bar_freq(roi=args.roi), bbox_inches="tight")
+plt.savefig(fname.fig_bar_freq(roi="ST"), bbox_inches="tight")
 plt.show()

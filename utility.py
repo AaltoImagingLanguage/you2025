@@ -83,7 +83,6 @@ def plot_cluster_label(cluster, rois, brain, time_index=None, color="black", wid
 
 
 def create_labels_adjacency_matrix(labels, src_to):
-
     adjacency = mne.spatial_src_adjacency(src_to)
     n_labels = len(labels)
     # Initialize an empty adjacency matrix for labels

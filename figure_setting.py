@@ -17,5 +17,5 @@ mpl.rcParams["figure.titlesize"] = 24
 # %%brain compare
 
 
-mpl.rcParams["figure.dpi"] = 300
+# mpl.rcParams["figure.dpi"] = 300
 # mpl.rcParams['font.family'] = 'Arial'

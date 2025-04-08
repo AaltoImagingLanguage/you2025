@@ -30,34 +30,22 @@ from config import (
     n_freq,
 )
 
-
-import os
 from itertools import product
 from mne.minimum_norm import apply_inverse_epochs, read_inverse_operator
 
 
-mne.set_config("SUBJECTS_DIR", fname.mri_subjects_dir)
+mne.set_config("SUBJECTS_DIR", fname.private_mri_subjects_dir)
 SUBJECT = "fsaverage"
 annotation = mne.read_labels_from_annot(SUBJECT, parc=parc, verbose=False)
 labels = [label for label in annotation if "Unknown" not in label.name]
 print("downsampling:", f_down_sampling)
 
 
-baseline_onset = -0.2
-onset = -0.1
-offset = 1
-
-
 # %%
 def main_conn(cond, sub, ii):
 
     print(sub, cond, ii)
-
     src_to = mne.read_source_spaces(fname.fsaverage_src, verbose=False)
-
-    # e0 = time.time()
-
-    # inv
     inverse_operator = read_inverse_operator(fname.inv(subject=sub), verbose=False)
     # morph_labels
     morph = mne.compute_source_morph(
@@ -124,7 +112,6 @@ def main_conn(cond, sub, ii):
 
 # %%
 parser = argparse.ArgumentParser(description=__doc__)
-
 parser.add_argument(
     "--band",
     type=str,
@@ -139,7 +126,7 @@ suffix = f"n_freq{n_freq}_fa_band_{arg.band}"
 
 # frequency band range
 fmin, fmax = frequency_bands[arg.band]
-freqs = np.linspace(fmin, fmax, int((fmax - fmin) * arg.n_freq + 1))
+freqs = np.linspace(fmin, fmax, int((fmax - fmin) * n_freq + 1))
 
 
 n_jobs = 1
@@ -149,12 +136,9 @@ Parallel(n_jobs=n_jobs)(
     delayed(main_conn)(
         cond,
         sub,
-        vOT_id,
+        ii,
     )
-    for cond, sub in product(
-        list(event_id.keys()),
-        subjects,
-    )
+    for cond, sub, ii in product(list(event_id.keys()), subjects, [vOT_id])
 )
 print((time.monotonic() - start_time1) / 60)
 print("FINISHED!")

@@ -107,7 +107,9 @@ cmaps3 = [
 fname = FileNames()
 fname.add("data_dir", data_dir)
 fname.add("data_conn", "{data_dir}/connectivity/")
-fname.add("private_data_dir", "nonexisting" if private_data_dir is None else private_data_dir)
+fname.add(
+    "private_data_dir", "nonexisting" if private_data_dir is None else private_data_dir
+)
 fname.add("figures_dir", figures_dir)  #  where the figures are saved
 
 # Public data
@@ -123,6 +125,7 @@ fname.add("times", "{data_dir}/connectivity/time_points.npy")
 fname.add("freqs", "{data_dir}/connectivity/freq_points.npy")
 
 # Private data
+fname.add("private_mri_subjects_dir", "{private_data_dir}/mri_subjects/")
 fname.add("subjects_dir", "{private_data_dir}/subjects/")
 fname.add("fwd_r", "{subjects_dir}/{subject}-{sp}-fwd.fif")
 fname.add("inv", "{subjects_dir}/{subject}-{sp}-inv.fif")
@@ -131,10 +134,22 @@ fname.add("ga_stc", "{subjects_dir}/grand_average_{category}_stc")
 fname.add("conn_dir", "{private_data_dir}/conn/")
 
 # Figures
-fname.add("fig_psf", "{figures_dir}/source_leakage/{seed_roi}2wholebrain_psf.pdf", mkdir=True)
-fname.add("fig_ctf", "{figures_dir}/source_leakage/wholebrain2{seed_roi}_ctf.pdf", mkdir=True)
+fname.add(
+    "fig_psf", "{figures_dir}/source_leakage/{seed_roi}2wholebrain_psf.pdf", mkdir=True
+)
+fname.add(
+    "fig_ctf", "{figures_dir}/source_leakage/wholebrain2{seed_roi}_ctf.pdf", mkdir=True
+)
 fname.add("fig_psi", "{figures_dir}/conn/psi_vOT_{roi}_band_{band}.pdf", mkdir=True)
-fname.add("fig_psi_contrast", "{figures_dir}/conn/psi_vOT_{roi}_band_{band}_contrast.pdf", mkdir=True)
+fname.add(
+    "fig_psi_contrast",
+    "{figures_dir}/conn/psi_vOT_{roi}_band_{band}_contrast.pdf",
+    mkdir=True,
+)
 fname.add("fig_gc", "{figures_dir}/conn/gc_tfs_vOT_{roi}_{condition}.pdf", mkdir=True)
-fname.add("fig_bar_time", "{figures_dir}/conn/gc_barplot_vOT_{roi}_time.pdf", mkdir=True)
-fname.add("fig_bar_freq", "{figures_dir}/conn/gc_barplot_vOT_{roi}_freq.pdf", mkdir=True)
+fname.add(
+    "fig_bar_time", "{figures_dir}/conn/gc_barplot_vOT_{roi}_time.pdf", mkdir=True
+)
+fname.add(
+    "fig_bar_freq", "{figures_dir}/conn/gc_barplot_vOT_{roi}_freq.pdf", mkdir=True
+)

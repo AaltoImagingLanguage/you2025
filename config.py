@@ -20,6 +20,10 @@ private_data_dir = None
 user = getpass.getuser()  # username of the user running the scripts
 if user == "youj2":
     private_data_dir = "/run/user/3198567/gvfs/smb-share:server=data.triton.aalto.fi,share=scratch/nbe/flexwordrec/"
+    conn_dir = ""
+elif user == "vanvlm1":
+    private_data_dir = "/m/nbe/scratch/flexwordrec"
+    conn_dir = "data/temp"
 
 
 # parcellation
@@ -124,11 +128,15 @@ fname.add("freqs", "{data_dir}/connectivity/freq_points.npy")
 
 # Private data
 fname.add("subjects_dir", "{private_data_dir}/subjects/")
+fname.add("private_mri_subjects_dir", "{private_data_dir}/mri_subjects/")
 fname.add("fwd_r", "{subjects_dir}/{subject}-{sp}-fwd.fif")
 fname.add("inv", "{subjects_dir}/{subject}-{sp}-inv.fif")
 fname.add("epo_con", "{subjects_dir}/{subject}-{condition}-epo.fif")
 fname.add("ga_stc", "{subjects_dir}/grand_average_{category}_stc")
-fname.add("conn_dir", "{private_data_dir}/conn/")
+
+# Analysis files produced using private data
+fname.add("conn_dir", conn_dir, mkdir=True)
+fname.add("conn_psi", "{conn_dir}/psi_vOT_wholebrain_band_{band}.nc", mkdir=True)
 
 # Figures
 fname.add("fig_psf", "{figures_dir}/source_leakage/{seed_roi}2wholebrain_psf.pdf", mkdir=True)

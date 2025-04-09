@@ -23,8 +23,8 @@ parser.add_argument(
     type=str,
     default="broadband",
     help=(
-        "frequency band to show. One of: alpha, theta, low_beta, high_beta, low_gamma, "
-        "broadband",
+        "frequency band to show. [alpha, theta, low_beta, high_beta, low_gamma, "
+        "broadband]"
     ),
 )
 args = parser.parse_args()

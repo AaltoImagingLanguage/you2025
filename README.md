@@ -3,23 +3,26 @@
 This repository contains the code associated with the paper "Dynamic feedforward and feedback influences on left ventral occipitotemporal cortex: evidence from word and pseudoword reading".
 
 
+## Installation
+
+Figure generation is based on the data obtained above and on grand-averaged source leakages, which have been highly processed to prevent the identification of individual participants. The resulting data are stored on OSF: https://osf.io/yzqtw.
+
+The Python packages required to generate the figures are listed in `requirements.txt`. One way to install them is through pip:
+
+```
+pip install -r requirements.txt
+```
+
+
 ## Usage
 
 ### Data Processing (access to personal data is required)
 
 - `1_compute_whole_brain_PSI.py`: Computes phase slope index (PSI) across the whole brain
 - `2_compute_pairwise_gc.py`: Computes pairwise Granger causality (GC)
-- `3_convert_psi_toarray.py`: Converts PSI results to array format for further analysis
-- `4_convert_gc_toarray.py`: Converts Granger causality results to array format for further analysis
 
 ### Figure Generation
 
-Figure generation is based on the data obtained above and on grand-averaged source leakages, which have been highly processed to prevent the identification of individual participants. The resulting data are stored on OSF: https://osf.io/yzqtw.
-The Python packages required to generate the figures are listed in `requirements.txt`. One way to install them is through pip:
-
-```
-pip install -r requirements.txt
-```
 The following scripts can be run to reproduce the figures in the paper:
 
 - `fig1_source_leakage.py`: Generates figure 1 showing source leakage analysis

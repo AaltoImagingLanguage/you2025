@@ -190,10 +190,6 @@ seed_id = rois[arg.seed]
 
 start_time1 = time.monotonic()
 
-# index of seed and target region
-seeds = [arg.seed, "vOT"]
-targets = [arg.seed, "vOT"]
-
 # Read a source estimate to get the vertices.
 stc = mne.read_source_estimate(fname.ga_stc(category="RW"), "fsaverage")
 
@@ -208,13 +204,13 @@ np.random.shuffle(random_subjects)
 gc = xr.concat(gc, xr.DataArray(random_subjects, dims="subjects"))
 gc = gc.sortby("subjects")  # re-order the data to follow the random subject labels
 
-to_vOT = gc.sel({"node_in -> node_out": "0"}, drop=True)
-to_vOT.attrs["seed"] = arg.seed
-to_vOT.to_netcdf(fname.gc(method="gc", a=arg.seed, b="vOT"))
-
-from_vOT = gc.sel({"node_in -> node_out": "1"}, drop=True)
+from_vOT = gc.sel({"node_in -> node_out": "0"}, drop=True)
 from_vOT.attrs["target"] = arg.seed
 from_vOT.to_netcdf(fname.gc(method="gc", a="vOT", b=arg.seed))
+
+to_vOT = gc.sel({"node_in -> node_out": "1"}, drop=True)
+to_vOT.attrs["seed"] = arg.seed
+to_vOT.to_netcdf(fname.gc(method="gc", a=arg.seed, b="vOT"))
 
 print((time.monotonic() - start_time1) / 60)
 print("FINISHED!")

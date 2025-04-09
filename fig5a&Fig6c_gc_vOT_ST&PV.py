@@ -9,7 +9,7 @@ import numpy as np
 import xarray as xr
 from skimage.measure import find_contours
 
-from config import event_id, fname, offset, onset
+from config import fname, offset, onset
 
 mpl.rcParams["font.size"] = 14
 mpl.rcParams["figure.titlesize"] = 16
@@ -87,7 +87,7 @@ t_obs, clusters, pvals, _ = mne.stats.permutation_cluster_1samp_test(
     verbose=False,
 )
 
-T_obs_plot = 0 * np.ones_like(t_obs)
+T_obs_plot = np.zeros_like(t_obs)
 for cl, p_val in zip(clusters, pvals):
     if p_val <= 0.05:
         T_obs_plot[cl] = 1

@@ -1,5 +1,5 @@
-# %%
-# import figure_setting
+"""Make time-frequency plots for the Granger causability in the vOT-PV/ST connection."""
+
 import argparse
 
 import matplotlib as mpl
@@ -29,16 +29,17 @@ parser.add_argument(
     "--roi",
     type=str,
     default="ST",
-    help="Seed region to compute gc or gc_tr: [PV, pC, AT, ST]",
+    help="Show gc or gc_tr from vOT to the given ROI: [PV, pC, AT, ST]",
 )
 args = parser.parse_args()
 threshold = 2  # threshold for the cluster permutation test
 
 # e.g., ff: pv->vOT; ff: vOT->ST, so the order is different
 if args.roi == "PV":
-    target, seed = args.roi, "vOT"
+    # Change the direction, as we want PV->vOT to denote feedforward.
+    seed, target = args.roi, "vOT"
 else:
-    target, seed = "vOT", args.roi
+    seed, target = "vOT", args.roi
 
 # gc and gc_tr from seed to target
 gc_tfs_ab = xr.load_dataarray(fname.gc(method="gc", a=seed, b=target))

@@ -20,7 +20,7 @@ map_name = "RdYlBu_r"
 cmap = mpl.colormaps.get_cmap(map_name)
 colors_dir = [cmap(1000000), cmap(0), "k"]
 
-target, seed = "vOT", "ST"
+seed, target = "vOT", "ST"
 time_wins = [
     [0.090, 0.210],
     [0.270, 0.430],

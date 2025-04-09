@@ -1,4 +1,4 @@
-"""Make barplots for the time clusters in the vOT-ST connection."""
+"""Make barplots for the time clusters in the vOT-PV connection."""
 
 from itertools import product
 
@@ -20,7 +20,7 @@ map_name = "RdYlBu_r"
 cmap = mpl.colormaps.get_cmap(map_name)
 colors_dir = [cmap(1000000), cmap(0), "k"]
 
-target, seed = "PV", "vOT"
+seed, target = "PV", "vOT"
 time_wins = [[0.060, 0.140]]  # PV-vOT, in seconds, extracted from results in fig5a
 
 # gc and gc_tr from seed to target

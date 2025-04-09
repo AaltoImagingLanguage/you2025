@@ -25,15 +25,15 @@ parser.add_argument(
     "--roi",
     type=str,
     default="PV",
-    help="Region to show connectivity to vOT for. One of: pC, AT, ST, PV",
+    help="Show connectivity from vOT to the given ROI. [pC, AT, ST, PV]",
 )
 parser.add_argument(
     "--band",
     type=str,
     default="broadband",
     help=(
-        "frequency band to compute whole-cortex PSI. One of: alpha, theta, low_beta, ",
-        "high_beta, low_gamma, broadband",
+        "frequency band to compute whole-cortex PSI. [alpha, theta, low_beta, "
+        "high_beta, low_gamma, broadband]"
     ),
 )
 args = parser.parse_args()

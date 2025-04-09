@@ -45,13 +45,13 @@ labels = [label for label in annotation if "Unknown" not in label.name]
 print("downsampling:", f_down_sampling)
 
 
-def compute_gc_connectivity(seed, subject, method):
+def compute_gc_connectivity(target, subject, method):
     """Compute Granger causality connectivity for the given subject."""
     src_to = mne.read_source_spaces(fname.fsaverage_src, verbose=False)
 
-    # seed and target indices
-    seed_label = labels[rois[seed]]
-    target_label = labels[vOT_id]
+    # seed (vOT) and target indices
+    seed_label = labels[vOT_id]
+    target_label = labels[rois[target]]
 
     inverse_operator = read_inverse_operator(
         fname.inv(subject=subject),

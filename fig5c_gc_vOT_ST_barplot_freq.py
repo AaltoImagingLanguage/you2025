@@ -1,3 +1,5 @@
+"""Make barplots for the frequency clusters in the vOT-ST connection."""
+
 from itertools import product
 
 import matplotlib as mpl
@@ -19,7 +21,7 @@ map_name = "RdYlBu_r"
 cmap = mpl.colormaps.get_cmap(map_name)
 colors_dir = [cmap(1000000), cmap(0), "k"]
 
-target, seed = "vOT", "ST"
+seed, target = "vOT", "ST"
 freq_wins = [
     [11.0, 18.0],
     [30.0, 33.0],

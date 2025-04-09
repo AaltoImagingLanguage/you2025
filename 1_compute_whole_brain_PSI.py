@@ -129,7 +129,7 @@ parser.add_argument(
     "--band",
     type=str,
     default="broadband",
-    help="frequency band to compute whole-cortex PSI",
+    help="frequency band to compute whole-cortex PSI [alpha, theta, low_beta, high_beta, low_gamma, broadband]",
 )
 parser.add_argument(
     "-j",
@@ -148,11 +148,8 @@ suffix = f"n_freq{n_freq}_fa_band_{arg.band}"
 psi = Parallel(n_jobs=arg.n_jobs)(
     delayed(compute_psi_connectivity)(subject) for subject in subjects
 )
+psi = xr.concat(psi, xr.DataArray(subjects, dims="subjects"))
 
-# As a final pseudonymization, we assign random subject labels.
-random_subjects = [f"random-s{i:02d}" for i in range(len(subjects))]
-np.random.shuffle(random_subjects)
-psi = xr.concat(psi, xr.DataArray(random_subjects, dims="subjects"))
 psi = psi.sortby("subjects")  # re-order the data to follow the random subject labels
 psi.to_netcdf(fname.psi(band=arg.band))
 print((time.monotonic() - start_time1) / 60)

@@ -13,14 +13,13 @@ from config import cmaps3, event_id, fname, subjects
 from utility import convert_pvalue_to_asterisks
 
 # Configure matplotlib
-mpl.rcParams["figure.dpi"] = 35
 mpl.rcParams["font.size"] = 35
 mpl.rcParams["figure.titlesize"] = 35
 map_name = "RdYlBu_r"
 cmap = mpl.colormaps.get_cmap(map_name)
 colors_dir = [cmap(1000000), cmap(0), "k"]
 
-seed, target = "vOT", "ST"
+target, seed = "vOT", "ST"
 freq_wins = [
     [11.0, 18.0],
     [30.0, 33.0],

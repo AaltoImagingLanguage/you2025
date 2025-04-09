@@ -21,7 +21,7 @@ cmap = mpl.colormaps.get_cmap(map_name)
 colors_dir = [cmap(1000000), cmap(0), "k"]
 
 target, seed = "PV", "vOT"
-time_wins = [[0.60, 0.140]]  # PV-vOT, in seconds, extracted from results in fig5a
+time_wins = [[0.060, 0.140]]  # PV-vOT, in seconds, extracted from results in fig5a
 
 # gc and gc_tr from seed to target
 gc_tfs_ab = xr.load_dataarray(fname.gc(method="gc", a=seed, b=target))

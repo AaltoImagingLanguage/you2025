@@ -18,8 +18,10 @@ pip install -r requirements.txt
 
 ### Data Processing (access to personal data is required)
 
+- `run_analysis.sh`: Runs the 3 analysis steps below, for all ROIs and frequency bands.
 - `1_compute_whole_brain_PSI.py`: Computes phase slope index (PSI) across the whole brain
 - `2_compute_pairwise_gc.py`: Computes pairwise Granger causality (GC)
+- `3_randomize_subjects.py`: Assigns random subject labels for pseudonymization
 
 ### Figure Generation
 

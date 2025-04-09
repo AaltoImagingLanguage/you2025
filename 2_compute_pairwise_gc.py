@@ -45,7 +45,7 @@ labels = [label for label in annotation if "Unknown" not in label.name]
 print("downsampling:", f_down_sampling)
 
 
-def compute_gc_connectivity(seed, subject):
+def compute_gc_connectivity(seed, subject, method):
     """Compute Granger causality connectivity for the given subject."""
     src_to = mne.read_source_spaces(fname.fsaverage_src, verbose=False)
 
@@ -164,53 +164,48 @@ def compute_gc_connectivity(seed, subject):
     return con
 
 
-# %%
-
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument(
     "--method",
     type=str,
     default="gc",
-    help="method to compute connectivity (gc or gc_tr)",
+    help="method to compute connectivity [gc, gc_tr]",
 )
 
 parser.add_argument(
-    "--seed",
+    "--roi",
     type=str,
     default="ST",
-    help="seed region to compute gc or gc_tr: [PV, pC, AT, ST]",
+    help="compute gc or gc_tr between vOT and the given ROI: [PV, pC, AT, ST]",
+)
+parser.add_argument(
+    "-j",
+    "--n-jobs",
+    type=int,
+    default=1,
+    help="number of CPU cores to use",
 )
 
 arg = parser.parse_args()
 
-n_jobs = 1
-method = arg.method
-
-seed_id = rois[arg.seed]
-
 start_time1 = time.monotonic()
 
-# Read a source estimate to get the vertices.
-stc = mne.read_source_estimate(fname.ga_stc(category="RW"), "fsaverage")
-
 # Run gc/tr_gc across all subjects in parallel.
-gc = Parallel(n_jobs=n_jobs)(
-    delayed(compute_gc_connectivity)(arg.seed, subject) for subject in subjects
+gc = Parallel(n_jobs=arg.n_jobs)(
+    delayed(compute_gc_connectivity)(arg.roi, subject, arg.method)
+    for subject in subjects
 )
-
-# As a final pseudonymization, we assign random subject labels.
-random_subjects = [f"random-s{i:02d}" for i in range(len(subjects))]
-np.random.shuffle(random_subjects)
-gc = xr.concat(gc, xr.DataArray(random_subjects, dims="subjects"))
-gc = gc.sortby("subjects")  # re-order the data to follow the random subject labels
+gc = xr.concat(gc, xr.DataArray(subjects, dims="subjects"))
 
 from_vOT = gc.sel({"node_in -> node_out": "0"}, drop=True)
-from_vOT.attrs["target"] = arg.seed
-from_vOT.to_netcdf(fname.gc(method="gc", a="vOT", b=arg.seed))
+from_vOT.attrs["seed"] = "vOT"
+from_vOT.attrs["target"] = arg.roi
+from_vOT.to_netcdf(fname.gc(method=arg.method, a="vOT", b=arg.roi))
 
 to_vOT = gc.sel({"node_in -> node_out": "1"}, drop=True)
-to_vOT.attrs["seed"] = arg.seed
-to_vOT.to_netcdf(fname.gc(method="gc", a=arg.seed, b="vOT"))
+to_vOT.attrs["seed"] = arg.roi
+to_vOT.attrs["target"] = "vOT"
+to_vOT.to_netcdf(fname.gc(method=arg.method, a=arg.roi, b="vOT"))
 
 print((time.monotonic() - start_time1) / 60)
 print("FINISHED!")

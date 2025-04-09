@@ -20,10 +20,8 @@ private_data_dir = None
 user = getpass.getuser()  # username of the user running the scripts
 if user == "youj2":
     private_data_dir = "/run/user/3198567/gvfs/smb-share:server=data.triton.aalto.fi,share=scratch/nbe/flexwordrec/"
-    conn_dir = ""
 elif user == "vanvlm1":
     private_data_dir = "/m/nbe/scratch/flexwordrec"
-    conn_dir = "data/temp"
 
 
 # parcellation

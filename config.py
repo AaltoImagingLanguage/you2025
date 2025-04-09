@@ -20,6 +20,8 @@ private_data_dir = None
 user = getpass.getuser()  # username of the user running the scripts
 if user == "youj2":
     private_data_dir = "/run/user/3198567/gvfs/smb-share:server=data.triton.aalto.fi,share=scratch/nbe/flexwordrec/"
+elif user == "vanvlm1":
+    private_data_dir = "/m/nbe/scratch/flexwordrec"
 
 
 # parcellation
@@ -118,20 +120,19 @@ fname.add("sp", "ico4")  # add this so we can use it in the filenames below
 fname.add("fsaverage_src", "{mri_subjects_dir}/fsaverage/fsaverage-{sp}-src.fif")
 fname.add("psf", "{data_dir}/source_leakage/leakage_ave_psfs_{seed_roi}-wholebrain.npy")
 fname.add("ctf", "{data_dir}/source_leakage/leakage_ave_ctfs_wholebrain-{seed_roi}.npy")
-fname.add("psi", "{data_dir}/connectivity/psi_vOT_wholebrain_band_{band}.npy")
-fname.add("gc", "{data_dir}/connectivity/gc_{a}_{b}.npy")
-fname.add("gc_tr", "{data_dir}/connectivity/gc_tr_{a}_{b}.npy")
+fname.add("psi", "{data_dir}/connectivity/psi_vOT_wholebrain_band_{band}.nc")
+fname.add("gc", "{data_dir}/connectivity/{method}_{a}_{b}.nc")
 fname.add("times", "{data_dir}/connectivity/time_points.npy")
 fname.add("freqs", "{data_dir}/connectivity/freq_points.npy")
 
 # Private data
 fname.add("private_mri_subjects_dir", "{private_data_dir}/mri_subjects/")
 fname.add("subjects_dir", "{private_data_dir}/subjects/")
+fname.add("private_mri_subjects_dir", "{private_data_dir}/mri_subjects/")
 fname.add("fwd_r", "{subjects_dir}/{subject}-{sp}-fwd.fif")
 fname.add("inv", "{subjects_dir}/{subject}-{sp}-inv.fif")
 fname.add("epo_con", "{subjects_dir}/{subject}-{condition}-epo.fif")
 fname.add("ga_stc", "{subjects_dir}/grand_average_{category}_stc")
-fname.add("conn_dir", "{private_data_dir}/conn/")
 
 # Figures
 fname.add(

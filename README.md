@@ -1,11 +1,16 @@
 # Dynamic Feedforward and Feedback Influences on Left Ventral Occipitotemporal Cortex
 
-This repository contains the code associated with the paper "Dynamic feedforward and feedback influences on left ventral occipitotemporal cortex: evidence from word and pseudoword reading".
+This repository contains the code associated with the paper:
+
+Jiaxin You, Olaf Hauk, Riitta Salmelin, and Marijn van Vliet (2025).
+"Dynamic feedforward and feedback influences on left ventral occipitotemporal cortex: evidence from word and pseudoword reading".
 
 
 ## Installation
 
 Figure generation is based on the data obtained above and on grand-averaged source leakages, which have been highly processed to prevent the identification of individual participants. The resulting data are stored on OSF: https://osf.io/yzqtw.
+
+Edite `config.py` and set the `data_dir` variable to the folder into which you have un-zippped the data.
 
 The Python packages required to generate the figures are listed in `requirements.txt`. One way to install them is through pip:
 
@@ -37,3 +42,7 @@ The following scripts can be run to reproduce the figures in the paper:
 - `fig5c_gc_vOT_ST_barplot_freq.py`: Bar plots of frequency clusters extracted from GC results for vOT and ST
 - `fig6d_gc_vOT_PV_barplot_time.py`: Bar plots of time clusters extracted from GC results for vOT and PV
 
+
+## Authors of the code
+Jiaxin You  
+Marijn van Vliet  

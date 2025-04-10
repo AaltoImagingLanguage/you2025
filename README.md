@@ -10,7 +10,7 @@ Jiaxin You, Olaf Hauk, Riitta Salmelin, and Marijn van Vliet (2025).
 
 Figure generation is based on the data obtained above and on grand-averaged source leakages, which have been highly processed to prevent the identification of individual participants. The resulting data are stored on OSF: https://osf.io/yzqtw.
 
-Edite `config.py` and set the `data_dir` variable to the folder into which you have un-zippped the data.
+Edit `config.py` and set the `data_dir` variable to the folder into which you have un-zipped the data.
 
 The Python packages required to generate the figures are listed in `requirements.txt`. One way to install them is through pip:
 
